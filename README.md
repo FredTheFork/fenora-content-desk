@@ -9,6 +9,9 @@ For [fenora.pro](https://fenora.pro) — window business software, from CRM to D
 
 `node server.js` → open `http://localhost:4321`. No build step, no `npm install`.
 
+**[⬇ Download all 283 images (18 MB zip)](https://github.com/FredTheFork/fenora-content-desk/releases/tag/v1.0-images)**
+— don't want to build anything? That has every finished image, ready to upload.
+
 </div>
 
 ---
