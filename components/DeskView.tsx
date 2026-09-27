@@ -14,6 +14,12 @@ import PostRow, { connectedPlatforms } from './PostRow';
 import PostDetail from './PostDetail';
 import LibraryPanel from './LibraryPanel';
 
+/** "Instagram, Facebook and LinkedIn" — never "Instagram and Facebook and LinkedIn". */
+function listOf(items: string[]): string {
+  if (items.length < 2) return items[0] ?? '';
+  return `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`;
+}
+
 export default function DeskView({ data }: { data: DeskData }) {
   const router = useRouter();
   const [busy, setBusy] = useState<Record<string, Platform[]>>({});
@@ -126,15 +132,24 @@ export default function DeskView({ data }: { data: DeskData }) {
 
   const notices = [...data.notices];
   const missing = [
-    !data.connections.instagram.connected ? 'Instagram' : null,
     !data.connections.facebook.connected ? 'Facebook' : null,
+    !data.connections.instagram.connected ? 'Instagram' : null,
     !data.connections.linkedin.connected ? 'LinkedIn' : null,
   ].filter(Boolean) as string[];
   if (missing.length) {
     notices.unshift(
-      `${missing.join(' and ')} ${missing.length === 1 ? 'is' : 'are'} not connected yet — connect from Settings and the buttons light up.`,
+      missing.length === 1
+        ? `${missing[0]} is not connected yet — connect it in Settings and its buttons light up.`
+        : `${listOf(missing)} are not connected yet — connect them in Settings and the buttons light up.`,
     );
   }
+
+  // Whose accounts the desk will post to, once they are connected.
+  const identity = [
+    data.connections.facebook.pageName,
+    data.connections.instagram.username ? `@${data.connections.instagram.username}` : null,
+    data.connections.linkedin.authorName,
+  ].filter(Boolean) as string[];
   if (data.connections.instagram.connected && !data.connections.instagram.username) {
     notices.push(
       'Instagram is connected but this desk could not read the username. Posting still works; if it fails, Meta will say why.',
@@ -166,11 +181,8 @@ export default function DeskView({ data }: { data: DeskData }) {
             ) : null}
           </div>
           <div>
-            <strong className="num">{data.postedCount}</strong> posted from {data.totalPosts} ·{' '}
-            {data.connections.facebook.pageName ?? 'no Page'}
-            {data.connections.instagram.username
-              ? ` · @${data.connections.instagram.username}`
-              : ''}
+            <strong className="num">{data.postedCount}</strong> posted from {data.totalPosts}
+            {identity.length ? ` · ${identity.join(' · ')}` : ''}
           </div>
         </div>
       </div>
