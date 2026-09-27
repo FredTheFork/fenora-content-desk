@@ -17,7 +17,7 @@ __pycache__/
 render/out/
 
 # AI-generated hero photos (regenerate or replace freely)
-assets/ai/*.png
+# assets/ai/*.png   (uncomment to exclude the AI hero photos)
 
 # Editor / OS
 .vscode/
