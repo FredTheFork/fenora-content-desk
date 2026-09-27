@@ -348,7 +348,7 @@ def footers(d, W, H, bg_light, pillar):
     fy = H - int(H * 0.042)
     fs = int(W * 0.0245)
     d.text((int(W * 0.075), fy), "FENORA", font=F(fs, 800), fill=ORANGE, anchor="lm")
-    d.text((int(W * 0.075) + int(W * 0.098), fy), "fenora.pro", font=F(int(fs * 0.94), 500), fill=ink, anchor="lm")
+    d.text((int(W * 0.075) + int(W * 0.135), fy), "fenora.pro", font=F(int(fs * 0.94), 500), fill=ink, anchor="lm")
     d.line([(int(W * 0.925) - int(fs * 5.2), fy), (int(W * 0.925) - int(fs * 0.4), fy)], fill=ink, width=1)
     d.text((int(W * 0.925), fy), pillar.upper(), font=F(int(fs * 0.82), 700), fill=ink, anchor="rm")
 

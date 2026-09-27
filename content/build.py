@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Fenora Pro — content library builder.
-Compiles all post parts into posts.json + posts.csv for the scheduling dashboard.
+Compiles all post parts into posts.json + posts.csv for the desk.
 """
 import csv
 import re

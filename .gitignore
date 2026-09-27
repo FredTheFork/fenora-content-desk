@@ -1,30 +1,38 @@
-# Secrets & credentials — never commit
+# ── Secrets & credentials — never commit ────────────────────────────────────
+.env
+.env.local
+.env*.local
 config.json
 *.token
 
-# Your actual schedule and local state
-content/schedule.json
-.DS_Store
+# ── Local desk state (used when no database is configured) ──────────────────
+.data/
 
-# Dependencies / build output
+# ── Next.js ────────────────────────────────────────────────────────────────
 node_modules/
-__pycache__/
-*.pyc
+.next/
+.next-*/
+out/
+next-env.d.ts
+.vercel
+*.tsbuildinfo
 
-# Rendered images are ~140MB and reproducible in ~10 minutes:
-#   cd render && python3 render.py && python3 tools/to_jpg.py
-# Uncomment the next lines if you'd rather commit them.
+# ── Image renderer output ──────────────────────────────────────────────────
+# render/png/ is the print-master set: reproducible, not committed.
+# public/media/ IS committed on purpose — Instagram can only post from a public
+# URL, so the upload-ready JPEGs ship with the site.
 render/png/
-render/jpg/
-
-# Download bundles, produced by build.sh
 fenora-images.zip
 
-# AI-generated hero photos (regenerate or replace freely)
-# assets/ai/*.png   (uncomment to exclude the AI hero photos)
+# ── Python ─────────────────────────────────────────────────────────────────
+__pycache__/
+*.pyc
+.venv/
+venv/
 
-# Editor / OS
+# ── Editors / OS ───────────────────────────────────────────────────────────
 .vscode/
 .idea/
+.DS_Store
 Thumbs.db
 *.swp

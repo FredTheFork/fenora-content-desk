@@ -64,7 +64,8 @@ month. The algorithm punishes absence far harder than it rewards volume, and —
 is the part people get wrong — **it punishes you for not showing up, not for showing
 up badly.** A mediocre post on schedule beats a genius post in three weeks.
 
-The dashboard's auto-scheduler does this for you. One click fills 90 days.
+The desk's planner does this for you — it lays out the whole library across the calendar
+on those rules, and rebuilding it after an edit keeps everything you have already posted.
 
 ---
 
@@ -104,9 +105,9 @@ will get local followers, and local followers are the only followers who convert
 
 ## 4. Platform roles — they are not the same job
 
-Posting the identical thing to all three wastes two-thirds of each impression. The
-dashboard rewrites the copy per platform automatically, but this is the thinking
-behind it.
+Posting the identical thing to all three wastes two-thirds of each impression. The desk
+keeps a separately written caption per platform — the copy was never meant to be
+the same in all three places. This is the thinking behind it.
 
 ### Instagram — the engine
 Where the trade lives. Reels and text cards. The first line of a caption is the only
@@ -142,8 +143,10 @@ But be honest about the economics: generating 251 images will take weeks and loo
 generic. The trade responds to **relatable and funny**, and text does that faster
 than photography.
 
-**So the primary visual is the caption card** — built into the dashboard. Four
-layouts, three aspect ratios (1:1, 4:5, 9:16), instant PNG, your brand colours.
+**So the primary visual is the caption card** — drawn by the renderer in this repo.
+A layout system (statement, quote, number, diagram, product, split, photo), real
+window geometry as vector art, 4:5 for the feed and 9:16 for stories, in the brand
+palette. Every one of the 251 posts has a finished card.
 Roughly half the library is written specifically to land as a bold text card:
 
 > **28% of a standard UK casement is not glass.**
@@ -243,16 +246,20 @@ closes this sale every single time.
 ## 10. Where the files are
 
 ```
-fenora-marketing/
+fenora-content-desk/
 ├── STRATEGY.md              ← this
-├── README.md                ← how to run the tool
-├── server.js                ← local server + platform publishing
-├── config.example.json      ← copy to config.json and add your tokens
-├── app/                     ← the Content Desk (index.html, app.js, styles.css)
-└── content/
-    ├── posts_a–d.py         ← the library, written as Python
-    ├── build.py             ← compiles to posts.json + posts.csv
-    ├── posts.json           ← 251 posts, all three platform captions pre-built
-    ├── posts.csv            ← same, for spreadsheets
-    └── schedule.json        ← your dates (created on first save)
+├── README.md                ← how to deploy it and how to use it
+├── app/                     ← the two pages: the Desk and Settings
+│   └── api/                 ← publishing, connections, cron
+├── lib/                     ← Meta + LinkedIn clients, storage, scheduling
+├── components/              ← the interfaces
+├── data/posts.json          ← 251 posts, compiled for the desk
+├── public/media/            ← the finished images the platforms fetch
+├── content/
+│   ├── posts_a–d.py         ← the library, written as Python
+│   ├── build.py             ← compiles to posts.json + posts.csv
+│   ├── posts.json           ← 251 posts, all three platform captions pre-built
+│   └── posts.csv            ← same, for spreadsheets
+├── render/                  ← the brand image renderer
+└── tools/                   ← build helpers + the publishing self-test
 ```

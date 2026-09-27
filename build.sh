@@ -1,22 +1,27 @@
 #!/usr/bin/env bash
-# Fenora Content Desk — build everything from scratch.
+# Fenora Content Desk — rebuild everything from the written library to the site.
 #
-#   ./build.sh          render all 251 images + zip them
-#   ./build.sh serve    just start the dashboard
+#   ./build.sh          content → images → desk data → ready to deploy
+#   ./build.sh serve    start the desk on http://localhost:3000
+#   ./build.sh check    run the publishing self-test (mock Meta + LinkedIn)
 #
-# Requires: Node 18+ (dashboard), Python 3 + Pillow (images).
+# Requires: Node 20+ (the desk), Python 3 + Pillow (the image renderer only).
 set -euo pipefail
 cd "$(dirname "$0")"
 
 if [ "${1:-}" = "serve" ]; then
-  echo "Starting Content Desk on http://localhost:4321"
-  exec node server.js
+  exec npx next dev
 fi
 
-command -v python3 >/dev/null || { echo "Python 3 required."; exit 1; }
+if [ "${1:-}" = "check" ]; then
+  exec node tools/selftest.mjs
+fi
+
+command -v python3 >/dev/null || { echo "Python 3 is required for the image renderer."; exit 1; }
 python3 -c "import PIL" 2>/dev/null || {
   echo "Pillow is required for the image renderer:"
-  echo "    pip install Pillow"
+  echo "    python3 -m venv .venv && .venv/bin/pip install Pillow"
+  echo "…then run this script with .venv/bin/python on your PATH, or install it system-wide."
   exit 1; }
 
 if [ ! -f assets/fonts/MontserratVar.ttf ]; then
@@ -34,16 +39,16 @@ fi
 echo "Rendering images (251 posts, ~10 minutes)…"
 (cd render && python3 render.py)
 
-echo "Exporting JPEG copies (what the platforms actually want)…"
+echo "Exporting upload-ready JPEGs to public/media…"
 python3 tools/to_jpg.py
 
-echo "Zipping…"
-rm -f fenora-images.zip
-(cd render && zip -q -r ../fenora-images.zip jpg)
+echo "Compiling the desk data…"
+python3 tools/build_site_data.py
+
 echo
-echo "✅ $(ls render/png/*.png | wc -l) PNGs  ·  $(ls render/jpg/*.jpg | wc -l) JPEGs"
-echo "   render/png/          print-quality masters"
-echo "   render/jpg/          upload-ready (22 MB total)"
-echo "   fenora-images.zip    the whole set, zipped"
+echo "✅ $(ls render/png/*.png | wc -l) PNG masters · $(ls public/media/*.jpg | wc -l) JPEGs in public/media"
+echo "   render/png/      print masters (not committed)"
+echo "   public/media/    what the desk posts — commit these"
+echo "   data/posts.json  what the desk reads"
 echo
-echo "Now:  node server.js   →  http://localhost:4321"
+echo "Now:  npm install && npm run dev    →  http://localhost:3000"

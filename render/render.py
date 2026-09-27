@@ -31,6 +31,7 @@ def soft_gradient(im, c1, c2, vertical=True):
 
 
 def render(p, size="4:5"):
+    """Draw the post. Story frames are composed from the finished 4:5 card."""
     W0, H0 = SIZES[size]
     W, H = W0 * SS, H0 * SS
     light = p["id"] in LIGHT_SET
@@ -117,10 +118,35 @@ def _init(posts, light):
     core.LIGHT_SET = light
 
 
+def compose_story(card):
+    """Lay the finished 4:5 card into a 9:16 story frame.
+
+    The card keeps its designed proportions and sits in the middle band, clear of
+    Instagram's reply bar and progress bar. The bands above and below continue the
+    card's own edge colours so the extension is invisible — no seam, no letterbox.
+    """
+    W = card.width
+    H = int(round(W * 16 / 9))
+    story = Image.new("RGB", (W, H), card.getpixel((W // 2, card.height - 1)))
+
+    def edge_colour(y0, y1):
+        strip = card.crop((0, y0, W, y1)).resize((1, 1), Image.BOX)
+        return strip.getpixel((0, 0))
+
+    band = (H - card.height) // 2
+    draw = ImageDraw.Draw(story)
+    draw.rectangle([0, 0, W, band], fill=edge_colour(0, 8))
+    draw.rectangle([0, band + card.height, W, H], fill=edge_colour(card.height - 8, card.height))
+    story.paste(card, (0, band))
+    return story
+
+
 def _one(job):
     p, size = job
     try:
-        im = render(p, size)
+        im = render(p, "4:5" if size == "9:16" else size)
+        if size == "9:16":
+            im = compose_story(im)
         im.save(os.path.join(OUT, f'{p["id"]}_{size.replace(":", "x")}.png'), "PNG", optimize=True)
         return None
     except Exception as e:
