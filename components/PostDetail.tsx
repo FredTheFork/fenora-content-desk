@@ -8,7 +8,10 @@ interface Props {
   postId: string;
   onClose: () => void;
   onPublish: (platforms: Platform[], force?: boolean) => void;
-  onAction: (action: 'queue' | 'unqueue' | 'swap' | 'move', payload?: Record<string, unknown>) => void;
+  onAction: (
+    action: 'queue' | 'unqueue' | 'swap' | 'move',
+    payload?: Record<string, unknown>,
+  ) => void;
   notify: (message: string, kind?: 'alert' | 'ok') => void;
   busy: boolean;
 }
@@ -65,7 +68,10 @@ export default function PostDetail({ postId, onClose, onPublish, onAction, notif
       setDetail({
         ...detail,
         captions: { ...detail.captions, [tab]: draft },
-        edited: { ...detail.edited, [tab]: draft.trim() !== detail.captions[tab] || Boolean(detail.edited[tab]) },
+        edited: {
+          ...detail.edited,
+          [tab]: draft.trim() !== detail.captions[tab] || Boolean(detail.edited[tab]),
+        },
       });
       setDirty(false);
       notify('Caption saved');
@@ -93,7 +99,9 @@ export default function PostDetail({ postId, onClose, onPublish, onAction, notif
   }
 
   const image = size === 'story' && detail.story ? detail.story : detail.image;
-  const remaining = PLATFORM_ORDER.filter((p) => !detail.published[p] && detail.platforms.includes(p));
+  const remaining = PLATFORM_ORDER.filter(
+    (p) => !detail.published[p] && detail.platforms.includes(p),
+  );
 
   return (
     <div className="post-detail">
@@ -128,7 +136,12 @@ export default function PostDetail({ postId, onClose, onPublish, onAction, notif
           <a className="btn tiny ghost" href={`/media/${detail.image}`} download>
             Download image
           </a>
-          <a className="btn tiny ghost" href={`/media/${detail.image}`} target="_blank" rel="noreferrer">
+          <a
+            className="btn tiny ghost"
+            href={`/media/${detail.image}`}
+            target="_blank"
+            rel="noreferrer"
+          >
             Open full size
           </a>
         </div>
@@ -146,7 +159,12 @@ export default function PostDetail({ postId, onClose, onPublish, onAction, notif
             <input
               type="date"
               className="mono"
-              style={{ width: 150, padding: '6px 8px', border: '1px solid var(--line-strong)', borderRadius: 3 }}
+              style={{
+                width: 150,
+                padding: '6px 8px',
+                border: '1px solid var(--line-strong)',
+                borderRadius: 3,
+              }}
               defaultValue={detail.scheduledFor?.date ?? ''}
               id={`date-${detail.id}`}
             />
@@ -212,7 +230,12 @@ export default function PostDetail({ postId, onClose, onPublish, onAction, notif
           }}
         />
         <div className="row-actions" style={{ marginTop: 10, alignItems: 'center' }}>
-          <button type="button" className="btn sm" onClick={saveCaption} disabled={!dirty || saving}>
+          <button
+            type="button"
+            className="btn sm"
+            onClick={saveCaption}
+            disabled={!dirty || saving}
+          >
             {saving ? 'Saving…' : 'Save caption'}
           </button>
           <button type="button" className="btn sm ghost" onClick={copyCaption}>
@@ -226,10 +249,17 @@ export default function PostDetail({ postId, onClose, onPublish, onAction, notif
                 await fetch('/api/desk', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ action: 'caption', postId: detail.id, platform: tab, text: '' }),
+                  body: JSON.stringify({
+                    action: 'caption',
+                    postId: detail.id,
+                    platform: tab,
+                    text: '',
+                  }),
                 });
                 notify('Caption reset to the original');
-                const res = await fetch(`/api/post?id=${encodeURIComponent(detail.id)}`, { cache: 'no-store' });
+                const res = await fetch(`/api/post?id=${encodeURIComponent(detail.id)}`, {
+                  cache: 'no-store',
+                });
                 const json = (await res.json()) as { ok: boolean; post?: PostDetailView };
                 if (json.ok && json.post) setDetail(json.post);
               }}
@@ -267,7 +297,12 @@ export default function PostDetail({ postId, onClose, onPublish, onAction, notif
                     </>
                   ) : null}
                   {' · '}
-                  <button type="button" className="link" onClick={() => onPublish([p], true)} disabled={busy}>
+                  <button
+                    type="button"
+                    className="link"
+                    onClick={() => onPublish([p], true)}
+                    disabled={busy}
+                  >
                     post again
                   </button>
                 </div>

@@ -26,11 +26,9 @@ const CATCH_UP_DAYS = 3;
 export async function GET(req: NextRequest) {
   const secret = env.cronSecret;
   if (!secret) {
-    return fail(
-      'CRON_SECRET is not set, so the cron endpoint stays shut.',
-      503,
-      { hint: 'Add CRON_SECRET in Vercel → Settings → Environment Variables to enable auto-publishing.' },
-    );
+    return fail('CRON_SECRET is not set, so the cron endpoint stays shut.', 503, {
+      hint: 'Add CRON_SECRET in Vercel → Settings → Environment Variables to enable auto-publishing.',
+    });
   }
 
   const header = req.headers.get('authorization') ?? '';
@@ -57,7 +55,11 @@ export async function GET(req: NextRequest) {
     const fresh = await readState();
     const post = getPost(entry.id);
     if (!post || isFullyPosted(post, fresh)) continue;
-    const report = await publishPost({ postId: entry.id, platforms: post.platforms, requestUrl: req.url });
+    const report = await publishPost({
+      postId: entry.id,
+      platforms: post.platforms,
+      requestUrl: req.url,
+    });
     results.push({ postId: entry.id, outcomes: report.outcomes });
   }
 

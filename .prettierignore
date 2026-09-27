@@ -1,0 +1,9 @@
+node_modules
+.next
+.next-*
+public/media
+render/png
+content/posts.json
+content/posts.csv
+data/posts.json
+package-lock.json

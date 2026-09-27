@@ -60,7 +60,10 @@ export default function LibraryPanel({ items, busyId, onQueue, onOpen }: Props) 
                 }}
               />
             </div>
-            <label className="small muted" style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+            <label
+              className="small muted"
+              style={{ display: 'flex', gap: 6, alignItems: 'center' }}
+            >
               <input
                 type="checkbox"
                 checked={hideQueued}
@@ -95,7 +98,10 @@ export default function LibraryPanel({ items, busyId, onQueue, onOpen }: Props) 
                   <div className="f">
                     <span className="mono faint">{item.id}</span>
                     {item.posted.length ? (
-                      <span className="pill solid" title={`Already posted to ${item.posted.join(', ')}`}>
+                      <span
+                        className="pill solid"
+                        title={`Already posted to ${item.posted.join(', ')}`}
+                      >
                         Posted
                       </span>
                     ) : item.queuedOn ? (
@@ -128,7 +134,11 @@ export default function LibraryPanel({ items, busyId, onQueue, onOpen }: Props) 
 
           {shown < filtered.length ? (
             <div style={{ marginTop: 16, textAlign: 'center' }}>
-              <button type="button" className="btn sm ghost" onClick={() => setShown((s) => s + PAGE)}>
+              <button
+                type="button"
+                className="btn sm ghost"
+                onClick={() => setShown((s) => s + PAGE)}
+              >
                 Show {Math.min(PAGE, filtered.length - shown)} more
               </button>
             </div>

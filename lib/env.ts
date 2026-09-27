@@ -84,7 +84,9 @@ export function isPubliclyReachable(url: string): boolean {
   if (!url.startsWith('https://')) return false;
   try {
     const host = new URL(url).hostname;
-    return !['localhost', '127.0.0.1', '0.0.0.0', '[::1]'].includes(host) && !host.endsWith('.local');
+    return (
+      !['localhost', '127.0.0.1', '0.0.0.0', '[::1]'].includes(host) && !host.endsWith('.local')
+    );
   } catch {
     return false;
   }

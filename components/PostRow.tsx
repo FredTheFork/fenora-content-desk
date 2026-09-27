@@ -1,7 +1,14 @@
 'use client';
 
 import type { Platform, PublishOutcome } from '@/lib/types';
-import { FORMAT_LABEL, PLATFORM_LABEL, PLATFORM_ORDER, type ConnectionSummary, type EntryView, type PublishedMark } from '@/lib/view';
+import {
+  FORMAT_LABEL,
+  PLATFORM_LABEL,
+  PLATFORM_ORDER,
+  type ConnectionSummary,
+  type EntryView,
+  type PublishedMark,
+} from '@/lib/view';
 
 export interface RowProps {
   entry: EntryView;
@@ -51,7 +58,14 @@ export default function PostRow({
     <>
       <div className={`post${open ? ' open' : ''}`}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img className="thumb" src={`/media/${entry.image}`} alt="" loading="lazy" width={62} height={78} />
+        <img
+          className="thumb"
+          src={`/media/${entry.image}`}
+          alt=""
+          loading="lazy"
+          width={62}
+          height={78}
+        />
 
         <div className="grow">
           <div className="hook">{entry.hook}</div>
@@ -78,7 +92,7 @@ export default function PostRow({
                   href={mark.url ?? undefined}
                   target="_blank"
                   rel="noreferrer"
-                  title={`Posted ${timeOf(mark.at)} — open in ${PLATFORM_LABEL[platform]}`}
+                  title={`Posted to ${PLATFORM_LABEL[platform]} at ${timeOf(mark.at)} — open it`}
                 >
                   {PLATFORM_LABEL[platform]} ✓
                 </a>
@@ -90,11 +104,15 @@ export default function PostRow({
                 type="button"
                 className="btn tiny"
                 disabled={busy || !connected}
-                title={connected ? `Post to ${PLATFORM_LABEL[platform]}` : `${PLATFORM_LABEL[platform]} is not connected — open Settings`}
+                title={
+                  connected
+                    ? `Post to ${PLATFORM_LABEL[platform]}`
+                    : `${PLATFORM_LABEL[platform]} is not connected — open Settings`
+                }
                 onClick={() => onPublish([platform])}
               >
                 {isBusy ? <span className="spinner" /> : null}
-                {isBusy ? 'Posting…' : PLATFORM_LABEL[platform]}
+                {isBusy ? 'Posting…' : `Post to ${PLATFORM_LABEL[platform]}`}
               </button>
             );
           })}
@@ -106,7 +124,11 @@ export default function PostRow({
               disabled={busy}
               onClick={() => onPublish(remaining)}
             >
-              {busy ? 'Posting…' : `Post to all ${remaining.length}`}
+              {busy
+                ? 'Posting…'
+                : remaining.length === 3
+                  ? 'Post to all three'
+                  : `Post to all ${remaining.length}`}
             </button>
           ) : null}
 
@@ -123,7 +145,11 @@ export default function PostRow({
               <strong>{PLATFORM_LABEL[failure.platform]}</strong>
               <div className="grow">
                 {failure.error}
-                {failure.hint ? <div className="small" style={{ marginTop: 2 }}>{failure.hint}</div> : null}
+                {failure.hint ? (
+                  <div className="small" style={{ marginTop: 2 }}>
+                    {failure.hint}
+                  </div>
+                ) : null}
               </div>
             </div>
           ))}

@@ -58,7 +58,11 @@ export function emptyState(): DeskState {
     rev: 0,
     updatedAt: new Date().toISOString(),
     connections: {},
-    schedule: { config: { ...DEFAULT_SCHEDULE, mix: { ...DEFAULT_MIX } }, entries: [], builtAt: null },
+    schedule: {
+      config: { ...DEFAULT_SCHEDULE, mix: { ...DEFAULT_MIX } },
+      entries: [],
+      builtAt: null,
+    },
     published: {},
     captions: {},
   };
@@ -171,7 +175,10 @@ async function kvCommand(command: unknown[]): Promise<unknown> {
 /* ── Postgres ────────────────────────────────────────────────────────────── */
 
 type PgPool = {
-  query: (text: string, values?: unknown[]) => Promise<{ rows: Record<string, unknown>[]; rowCount: number | null }>;
+  query: (
+    text: string,
+    values?: unknown[],
+  ) => Promise<{ rows: Record<string, unknown>[]; rowCount: number | null }>;
 };
 
 let schemaReady: Promise<void> | null = null;

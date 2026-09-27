@@ -27,9 +27,12 @@ export async function GET(req: NextRequest) {
   const code = url.searchParams.get('code');
   const state = url.searchParams.get('state');
   const cookieState = req.cookies.get('fenora_oauth_meta')?.value;
-  if (!code) return back('?error=' + encodeURIComponent('Meta did not return an authorisation code.'));
+  if (!code)
+    return back('?error=' + encodeURIComponent('Meta did not return an authorisation code.'));
   if (!state || !cookieState || state !== cookieState) {
-    return back('?error=' + encodeURIComponent('That sign-in attempt expired. Press Connect again.'));
+    return back(
+      '?error=' + encodeURIComponent('That sign-in attempt expired. Press Connect again.'),
+    );
   }
 
   const redirectUri = `${baseUrl(req.url)}/api/connect/callback/meta`;
@@ -45,7 +48,10 @@ export async function GET(req: NextRequest) {
         }),
       { cache: 'no-store' },
     );
-    const tokenJson = (await tokenRes.json()) as { access_token?: string; error?: { message?: string } };
+    const tokenJson = (await tokenRes.json()) as {
+      access_token?: string;
+      error?: { message?: string };
+    };
     if (!tokenJson.access_token) {
       throw new Error(tokenJson.error?.message ?? 'Meta would not exchange that code for a token.');
     }
@@ -91,7 +97,10 @@ export async function GET(req: NextRequest) {
         name: p.name,
         token: p.access_token,
         ig: p.instagram_business_account?.id
-          ? { id: p.instagram_business_account.id, username: p.instagram_business_account.username ?? null }
+          ? {
+              id: p.instagram_business_account.id,
+              username: p.instagram_business_account.username ?? null,
+            }
           : null,
       })),
       selectedPageId: preferred.id,
@@ -109,6 +118,8 @@ export async function GET(req: NextRequest) {
       : '&instagramMissing=1';
     return back(`?connected=meta&page=${encodeURIComponent(preferred.name)}${igNote}`);
   } catch (err) {
-    return back(`?error=${encodeURIComponent((err as Error)?.message ?? 'Could not connect to Meta.')}`);
+    return back(
+      `?error=${encodeURIComponent((err as Error)?.message ?? 'Could not connect to Meta.')}`,
+    );
   }
 }

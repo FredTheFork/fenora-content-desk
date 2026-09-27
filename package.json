@@ -2,12 +2,15 @@
   "name": "fenora-content-desk",
   "version": "2.0.0",
   "private": true,
-  "description": "Fenora Content Desk — the post-and-publish dashboard for fenora.pro social media.",
+  "description": "Fenora Content Desk \u2014 the post-and-publish dashboard for fenora.pro social media.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "data": "python3 tools/build_site_data.py"
+    "data": "python3 tools/build_site_data.py",
+    "format": "prettier --write \"{app,components,lib,tools}/**/*.{ts,tsx,mjs,css}\" \"*.{json,mjs,ts}\"",
+    "typecheck": "tsc --noEmit",
+    "test": "node tools/selftest.mjs"
   },
   "dependencies": {
     "next": "15.5.26",
@@ -20,6 +23,7 @@
     "@types/pg": "^8.11.10",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "prettier": "^3.9.9",
     "typescript": "^5.7.0"
   },
   "engines": {

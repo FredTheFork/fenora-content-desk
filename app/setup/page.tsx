@@ -38,7 +38,8 @@ export default async function SetupPage() {
         </div>
         <ol className="lede" style={{ marginTop: 14, paddingLeft: 20 }}>
           <li>
-            Open your project on Vercel → <strong>Settings</strong> → <strong>Environment Variables</strong>.
+            Open your project on Vercel → <strong>Settings</strong> →{' '}
+            <strong>Environment Variables</strong>.
           </li>
           <li>
             Add <code>DESK_PASSWORD</code> with a password of your choosing (any length).
@@ -47,9 +48,7 @@ export default async function SetupPage() {
             Optionally add <code>DESK_SECRET</code> — a long random string. It encrypts the access
             tokens stored in your database.
           </li>
-          <li>
-            Redeploy (Vercel → Deployments → ⋯ → Redeploy), then reload this page.
-          </li>
+          <li>Redeploy (Vercel → Deployments → ⋯ → Redeploy), then reload this page.</li>
         </ol>
       </div>
 
@@ -103,11 +102,11 @@ export default async function SetupPage() {
           <h2>3. Redirect URIs to register in the apps</h2>
         </div>
         <p className="lede" style={{ marginTop: 12 }}>
-          If you connect with OAuth rather than pasting a token, these are the two URLs to paste into
-          the Meta app and the LinkedIn app:
+          If you connect with OAuth rather than pasting a token, these are the two URLs to paste
+          into the Meta app and the LinkedIn app:
         </p>
         <pre className="code" style={{ marginTop: 12 }}>
-{`Meta     → Facebook Login → Valid OAuth Redirect URIs
+          {`Meta     → Facebook Login → Valid OAuth Redirect URIs
            ${origin}/api/connect/callback/meta
 
 LinkedIn → Auth → Authorized redirect URLs

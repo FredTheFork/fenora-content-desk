@@ -59,7 +59,8 @@ export default function DeskView({ data }: { data: DeskData }) {
 
         const marks: Partial<Record<Platform, PublishedMark>> = {};
         for (const outcome of list) {
-          if (outcome.ok) marks[outcome.platform] = { at: new Date().toISOString(), url: outcome.url ?? null };
+          if (outcome.ok)
+            marks[outcome.platform] = { at: new Date().toISOString(), url: outcome.url ?? null };
         }
         if (Object.keys(marks).length) {
           setLocalMarks((m) => ({ ...m, [postId]: { ...(m[postId] ?? {}), ...marks } }));
@@ -167,7 +168,9 @@ export default function DeskView({ data }: { data: DeskData }) {
           <div>
             <strong className="num">{data.postedCount}</strong> posted from {data.totalPosts} ·{' '}
             {data.connections.facebook.pageName ?? 'no Page'}
-            {data.connections.instagram.username ? ` · @${data.connections.instagram.username}` : ''}
+            {data.connections.instagram.username
+              ? ` · @${data.connections.instagram.username}`
+              : ''}
           </div>
         </div>
       </div>
@@ -181,11 +184,14 @@ export default function DeskView({ data }: { data: DeskData }) {
         </div>
       ))}
 
-      {openId && ![...data.overdue, ...data.groups.flatMap((g) => g.entries)].some((e) => e.id === openId) ? (
+      {openId &&
+      ![...data.overdue, ...data.groups.flatMap((g) => g.entries)].some((e) => e.id === openId) ? (
         <section className="section">
           <div className="section-head">
             <h2>Post detail</h2>
-            <span className="muted small">Not on the calendar — nothing will go out until you post it.</span>
+            <span className="muted small">
+              Not on the calendar — nothing will go out until you post it.
+            </span>
             <span className="grow" />
             <button type="button" className="link" onClick={() => setOpenId(null)}>
               Close
@@ -240,8 +246,8 @@ export default function DeskView({ data }: { data: DeskData }) {
         <div className="section-head">
           <h2>Coming up</h2>
           <span className="muted small">
-            {data.schedule.perWeek} a week · {data.schedule.time} ({data.timezone.replace('_', ' ')})
-            {data.schedule.autoPublish ? ' · auto-publishing on' : ' · you post them'}
+            {data.schedule.perWeek} a week · {data.schedule.time} ({data.timezone.replace('_', ' ')}
+            ){data.schedule.autoPublish ? ' · auto-publishing on' : ' · you post them'}
           </span>
           <span className="grow" />
           <a className="btn sm ghost" href="/settings">

@@ -34,4 +34,3 @@ export function captionFor(
   if (override && override.trim()) return override.trim();
   return (post.caption[platform] || post.caption.ig || post.hook).trim();
 }
-

@@ -61,7 +61,9 @@ export async function rebuildSchedule(fromToday = true): Promise<{ entries: numb
       posts: POSTS,
       config: cfg,
       unavailable: new Set([...publishedIds(draft), ...keepIds]),
-      from: fromToday ? today(cfg.timezone) : draft.schedule.entries[0]?.date ?? today(cfg.timezone),
+      from: fromToday
+        ? today(cfg.timezone)
+        : (draft.schedule.entries[0]?.date ?? today(cfg.timezone)),
       days: PLAN_DAYS,
     });
     draft.schedule.entries = sortEntries([...keep, ...fresh]);
@@ -73,7 +75,11 @@ export async function rebuildSchedule(fromToday = true): Promise<{ entries: numb
 /* ── Queue moves ─────────────────────────────────────────────────────────── */
 
 /** The first free slot the planner would have used for this post. */
-export function nextSlot(state: DeskState, post: Post, fromDate?: string): { date: string; time: string } {
+export function nextSlot(
+  state: DeskState,
+  post: Post,
+  fromDate?: string,
+): { date: string; time: string } {
   const cfg = state.schedule.config;
   const start = fromDate ?? today(cfg.timezone);
   const perWeek = new Map<string, number>();
@@ -100,7 +106,13 @@ export async function queuePost(postId: string, date?: string): Promise<void> {
     if (!post) throw new Error('Unknown post');
     if (draft.schedule.entries.some((e) => e.id === postId)) return;
     const slot = date
-      ? { date, time: post.format === 'reel' || post.format === 'story' ? draft.schedule.config.reelTime : draft.schedule.config.time }
+      ? {
+          date,
+          time:
+            post.format === 'reel' || post.format === 'story'
+              ? draft.schedule.config.reelTime
+              : draft.schedule.config.time,
+        }
       : nextSlot(draft, post);
     draft.schedule.entries = sortEntries([...draft.schedule.entries, { id: postId, ...slot }]);
   });
@@ -138,18 +150,16 @@ export async function swapEntry(postId: string): Promise<{ replacedWith: string 
       usable[0];
     if (!pick) return { replacedWith: null };
     draft.schedule.entries = sortEntries([
-      ...draft.schedule.entries.map((e) => (e.id === postId ? { id: pick.id, date: e.date, time: e.time } : e)),
+      ...draft.schedule.entries.map((e) =>
+        e.id === postId ? { id: pick.id, date: e.date, time: e.time } : e,
+      ),
     ]);
     return { replacedWith: pick.id };
   });
   return result;
 }
 
-export async function setCaption(
-  postId: string,
-  platform: Platform,
-  text: string,
-): Promise<void> {
+export async function setCaption(postId: string, platform: Platform, text: string): Promise<void> {
   await updateState((draft) => {
     const post = getPost(postId);
     if (!post) throw new Error('Unknown post');

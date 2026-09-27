@@ -55,13 +55,20 @@ function looksLikeVersionProblem(status: number, body: GraphErrorBody): boolean 
   return false;
 }
 
-async function call<T>(path: string, method: 'GET' | 'POST' | 'DELETE', params: Params = {}): Promise<T> {
+async function call<T>(
+  path: string,
+  method: 'GET' | 'POST' | 'DELETE',
+  params: Params = {},
+): Promise<T> {
   const attempts: (string | null)[] = versionFallback ? [null] : [env.graphVersion, null];
   let lastError: PlatformError | null = null;
 
   for (const version of attempts) {
     const url = new URL(endpoint(path, version));
-    const cleanup = Object.entries(params).filter(([, v]) => v !== undefined) as [string, string | number][];
+    const cleanup = Object.entries(params).filter(([, v]) => v !== undefined) as [
+      string,
+      string | number,
+    ][];
     let init: RequestInit;
     if (method === 'GET') {
       for (const [k, v] of cleanup) url.searchParams.set(k, String(v));
@@ -128,7 +135,8 @@ function describe(body: GraphErrorBody): PlatformError {
       break;
     case 200:
     case 10:
-      hint = 'The app is missing a permission. Instagram needs instagram_content_publish and pages_manage_posts; Facebook needs pages_manage_posts.';
+      hint =
+        'The app is missing a permission. Instagram needs instagram_content_publish and pages_manage_posts; Facebook needs pages_manage_posts.';
       break;
     case 4:
     case 17:
@@ -137,14 +145,17 @@ function describe(body: GraphErrorBody): PlatformError {
       hint = 'You have hit a Meta rate limit. Wait a few minutes and try again.';
       break;
     case 100:
-      hint = 'Meta could not find that object — check the Page ID and Instagram account ID in Settings.';
+      hint =
+        'Meta could not find that object — check the Page ID and Instagram account ID in Settings.';
       break;
     case 36003:
-      hint = 'Instagram rejected the image size or aspect ratio. The desk posts 4:5 (1080×1350), which Instagram accepts.';
+      hint =
+        'Instagram rejected the image size or aspect ratio. The desk posts 4:5 (1080×1350), which Instagram accepts.';
       break;
     case 9007:
     case 2207026:
-      hint = 'Instagram could not download the image. It must be a public https URL — deploy the desk publicly or set PUBLIC_BASE_URL.';
+      hint =
+        'Instagram could not download the image. It must be a public https URL — deploy the desk publicly or set PUBLIC_BASE_URL.';
       break;
     default:
       if (/permission/i.test(message)) {

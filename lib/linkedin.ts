@@ -23,16 +23,21 @@ function headers(token: string, extra: Record<string, string> = {}): Record<stri
 
 async function li<T>(
   path: string,
-  opts: { method?: string; token: string; body?: unknown; raw?: BodyInit; contentType?: string } ,
+  opts: { method?: string; token: string; body?: unknown; raw?: BodyInit; contentType?: string },
 ): Promise<{ data: T | null; response: Response; text: string }> {
   const url = path.startsWith('http') ? path : `${API_BASE()}${path}`;
   let response: Response;
   try {
     response = await fetch(url, {
       method: opts.method ?? (opts.body || opts.raw ? 'POST' : 'GET'),
-      headers: headers(opts.token, opts.contentType ? { 'Content-Type': opts.contentType } : {
-        'Content-Type': 'application/json',
-      }),
+      headers: headers(
+        opts.token,
+        opts.contentType
+          ? { 'Content-Type': opts.contentType }
+          : {
+              'Content-Type': 'application/json',
+            },
+      ),
       body: opts.raw ?? (opts.body ? JSON.stringify(opts.body) : undefined),
       cache: 'no-store',
       signal: AbortSignal.timeout(45_000),
@@ -55,7 +60,11 @@ async function li<T>(
   if (!response.ok) {
     const body = data as { message?: string; status?: number; serviceErrorCode?: number } | null;
     const message = body?.message || text.slice(0, 300) || `HTTP ${response.status}`;
-    throw new PlatformError(message, linkedInHint(response.status, message, body?.status), body?.status);
+    throw new PlatformError(
+      message,
+      linkedInHint(response.status, message, body?.status),
+      body?.status,
+    );
   }
   return { data, response, text };
 }
@@ -84,9 +93,14 @@ export function isUnreachable(err: unknown): boolean {
 
 /* ── Identity ─────────────────────────────────────────────────────────────── */
 
-export async function getUserInfo(token: string): Promise<{ sub: string; name?: string; email?: string }> {
-  const { data } = await li<{ sub: string; name?: string; email?: string }>('/v2/userinfo', { token });
-  if (!data?.sub) throw new PlatformError('LinkedIn did not return a member id', linkedInHint(401, ''));
+export async function getUserInfo(
+  token: string,
+): Promise<{ sub: string; name?: string; email?: string }> {
+  const { data } = await li<{ sub: string; name?: string; email?: string }>('/v2/userinfo', {
+    token,
+  });
+  if (!data?.sub)
+    throw new PlatformError('LinkedIn did not return a member id', linkedInHint(401, ''));
   return data;
 }
 
@@ -120,9 +134,7 @@ export async function listOrganizations(
     }
   }
 
-  const ids = urns
-    .map((u) => u.split(':').pop() ?? '')
-    .filter(Boolean);
+  const ids = urns.map((u) => u.split(':').pop() ?? '').filter(Boolean);
   if (!ids.length) return [];
 
   let names = new Map<string, string>();
@@ -146,7 +158,11 @@ export async function listOrganizations(
 
 /* ── Publishing ───────────────────────────────────────────────────────────── */
 
-export async function uploadImage(token: string, ownerUrn: string, bytes: Uint8Array): Promise<string> {
+export async function uploadImage(
+  token: string,
+  ownerUrn: string,
+  bytes: Uint8Array,
+): Promise<string> {
   const { data } = await li<{ value?: { uploadUrl?: string; image?: string } }>(
     '/rest/images?action=initializeUpload',
     { token, body: { initializeUploadRequest: { owner: ownerUrn } } },
@@ -184,9 +200,17 @@ export async function createPost(opts: {
       author: opts.authorUrn,
       commentary: opts.commentary,
       visibility: 'PUBLIC',
-      distribution: { feedDistribution: 'MAIN_FEED', targetEntities: [], thirdPartyDistributionChannels: [] },
+      distribution: {
+        feedDistribution: 'MAIN_FEED',
+        targetEntities: [],
+        thirdPartyDistributionChannels: [],
+      },
       ...(opts.imageUrn
-        ? { content: { media: { title: opts.imageAltText?.slice(0, 200) || undefined, id: opts.imageUrn } } }
+        ? {
+            content: {
+              media: { title: opts.imageAltText?.slice(0, 200) || undefined, id: opts.imageUrn },
+            },
+          }
         : {}),
       lifecycleState: 'PUBLISHED',
       isReshareDisabledByAuthor: false,
@@ -194,11 +218,12 @@ export async function createPost(opts: {
   });
 
   const urn =
-    response.headers.get('x-restli-id') ??
-    (text.match(/"id"\s*:\s*"([^"]+)"/)?.[1] ?? null);
+    response.headers.get('x-restli-id') ?? text.match(/"id"\s*:\s*"([^"]+)"/)?.[1] ?? null;
 
   return {
     id: urn,
-    url: urn ? `https://www.linkedin.com/feed/update/${encodeURIComponent(urn)}/` : 'https://www.linkedin.com/feed/',
+    url: urn
+      ? `https://www.linkedin.com/feed/update/${encodeURIComponent(urn)}/`
+      : 'https://www.linkedin.com/feed/',
   };
 }

@@ -2,7 +2,13 @@ import type { NextRequest } from 'next/server';
 import { fail, guard, ok, readJson, str } from '@/lib/api';
 import { open as openSealed } from '@/lib/crypto';
 import { sealLinkedIn, sealMeta } from '@/lib/connections';
-import { findInstagramForPage, getPage, listUserPages, PlatformError, type MetaPage } from '@/lib/meta';
+import {
+  findInstagramForPage,
+  getPage,
+  listUserPages,
+  PlatformError,
+  type MetaPage,
+} from '@/lib/meta';
 import { getUserInfo, isUnreachable, listOrganizations } from '@/lib/linkedin';
 import { updateState } from '@/lib/store';
 import { isValidTimeZone } from '@/lib/time';
@@ -45,7 +51,11 @@ export async function POST(req: NextRequest) {
           str(body.orgUrn, 200),
         );
       case 'manual-meta':
-        return await manualMeta(str(body.pageId, 64), str(body.pageToken, 500), str(body.igUserId, 64));
+        return await manualMeta(
+          str(body.pageId, 64),
+          str(body.pageToken, 500),
+          str(body.igUserId, 64),
+        );
       case 'manual-linkedin':
         return await manualLinkedIn(str(body.token, 2000), str(body.orgUrn, 200));
       case 'disconnect':
@@ -63,15 +73,18 @@ export async function POST(req: NextRequest) {
 async function saveSchedule(patch: Partial<ScheduleConfig>) {
   const { state } = await updateState((draft) => {
     const cfg = draft.schedule.config;
-    if (typeof patch.perWeek === 'number') cfg.perWeek = Math.min(7, Math.max(1, Math.round(patch.perWeek)));
+    if (typeof patch.perWeek === 'number')
+      cfg.perWeek = Math.min(7, Math.max(1, Math.round(patch.perWeek)));
     if (Array.isArray(patch.days) && patch.days.length) {
       const days = [...new Set(patch.days.map(Number).filter((d) => d >= 0 && d <= 6))].sort();
       if (days.length) cfg.days = days;
     }
     if (typeof patch.time === 'string' && /^\d{2}:\d{2}$/.test(patch.time)) cfg.time = patch.time;
-    if (typeof patch.reelTime === 'string' && /^\d{2}:\d{2}$/.test(patch.reelTime)) cfg.reelTime = patch.reelTime;
+    if (typeof patch.reelTime === 'string' && /^\d{2}:\d{2}$/.test(patch.reelTime))
+      cfg.reelTime = patch.reelTime;
     if (typeof patch.autoPublish === 'boolean') cfg.autoPublish = patch.autoPublish;
-    if (typeof patch.timezone === 'string' && isValidTimeZone(patch.timezone)) cfg.timezone = patch.timezone;
+    if (typeof patch.timezone === 'string' && isValidTimeZone(patch.timezone))
+      cfg.timezone = patch.timezone;
     if (patch.mix && typeof patch.mix === 'object') {
       for (const [key, value] of Object.entries(patch.mix)) {
         const weight = Number(value);
@@ -88,7 +101,8 @@ async function selectPage(pageId: string) {
     const raw = draft.connections.meta;
     if (!raw) throw new Error('Facebook is not connected yet.');
     const meta = JSON.parse(JSON.stringify(openMeta(raw))) as MetaConnection;
-    if (!meta.pages.some((p) => p.id === pageId)) throw new Error('That Page is not in your connection.');
+    if (!meta.pages.some((p) => p.id === pageId))
+      throw new Error('That Page is not in your connection.');
     meta.selectedPageId = pageId;
     draft.connections.meta = sealMeta(meta);
     return meta;
@@ -146,16 +160,17 @@ async function manualMeta(pageId: string, token: string, igUserId: string) {
     page = pages.find((p) => p.id === pageId) ?? pages[0] ?? null;
   }
   if (!page) {
-    return fail(
-      'That token does not give access to any Facebook Page.',
-      undefined,
-      { hint: 'Generate a token with pages_show_list, pages_manage_posts and instagram_content_publish.' },
-    );
+    return fail('That token does not give access to any Facebook Page.', undefined, {
+      hint: 'Generate a token with pages_show_list, pages_manage_posts and instagram_content_publish.',
+    });
   }
 
   const pageToken = page.access_token || token;
   const ig = page.instagram_business_account?.id
-    ? { id: page.instagram_business_account.id, username: page.instagram_business_account.username ?? null }
+    ? {
+        id: page.instagram_business_account.id,
+        username: page.instagram_business_account.username ?? null,
+      }
     : igUserId
       ? { id: igUserId, username: null }
       : await findInstagramForPage(page.id, pageToken);
@@ -231,7 +246,9 @@ async function disconnect(provider: string) {
     if (provider === 'meta') delete draft.connections.meta;
     else delete draft.connections.linkedin;
   });
-  return ok({ message: provider === 'meta' ? 'Facebook and Instagram disconnected' : 'LinkedIn disconnected' });
+  return ok({
+    message: provider === 'meta' ? 'Facebook and Instagram disconnected' : 'LinkedIn disconnected',
+  });
 }
 
 /* The sealed blobs are opened in connections.ts; these mirror it for writes. */

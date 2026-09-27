@@ -4,7 +4,13 @@ import { baseUrl, env } from '@/lib/env';
 
 export const runtime = 'nodejs';
 
-const SCOPES = ['w_organization_social', 'r_organization_social', 'w_member_social', 'openid', 'profile'];
+const SCOPES = [
+  'w_organization_social',
+  'r_organization_social',
+  'w_member_social',
+  'openid',
+  'profile',
+];
 
 /** Step one of "Connect LinkedIn". */
 export async function GET(req: NextRequest) {
@@ -15,7 +21,9 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(
       new URL(
         '/settings?error=' +
-          encodeURIComponent('LINKEDIN_CLIENT_ID and LINKEDIN_CLIENT_SECRET are not set on this deployment.'),
+          encodeURIComponent(
+            'LINKEDIN_CLIENT_ID and LINKEDIN_CLIENT_SECRET are not set on this deployment.',
+          ),
         req.url,
       ),
     );

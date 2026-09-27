@@ -21,7 +21,10 @@ export async function GET(req: NextRequest) {
   const settings = (query: string) => NextResponse.redirect(new URL(`/settings${query}`, req.url));
 
   if (!env.metaAppId || !env.metaAppSecret) {
-    return settings('?error=' + encodeURIComponent('META_APP_ID and META_APP_SECRET are not set on this deployment.'));
+    return settings(
+      '?error=' +
+        encodeURIComponent('META_APP_ID and META_APP_SECRET are not set on this deployment.'),
+    );
   }
 
   const redirectUri = `${baseUrl(req.url)}/api/connect/callback/meta`;

@@ -43,16 +43,20 @@ export interface LinkedInCredentials {
   source: 'settings' | 'environment';
 }
 
-function readMeta(raw: string | undefined): { value: MetaConnection | null; problem: string | null } {
+function readMeta(raw: string | undefined): {
+  value: MetaConnection | null;
+  problem: string | null;
+} {
   if (!raw) return { value: null, problem: null };
   const result = open<MetaConnection>(raw);
   if (!result.ok) return { value: null, problem: result.reason };
   return { value: result.value, problem: null };
 }
 
-function readLinkedIn(
-  raw: string | undefined,
-): { value: LinkedInConnection | null; problem: string | null } {
+function readLinkedIn(raw: string | undefined): {
+  value: LinkedInConnection | null;
+  problem: string | null;
+} {
   if (!raw) return { value: null, problem: null };
   const result = open<LinkedInConnection>(raw);
   if (!result.ok) return { value: null, problem: result.reason };
@@ -153,9 +157,24 @@ export function linkedInCredentials(state: DeskState): LinkedInCredentials | Cre
 /* ── What the UI is allowed to know ──────────────────────────────────────── */
 
 export interface ConnectionSummary {
-  facebook: { connected: boolean; source: 'settings' | 'environment' | null; pageId: string | null; pageName: string | null; pages: { id: string; name: string }[] };
+  facebook: {
+    connected: boolean;
+    source: 'settings' | 'environment' | null;
+    pageId: string | null;
+    pageName: string | null;
+    pages: { id: string; name: string }[];
+  };
   instagram: { connected: boolean; igUserId: string | null; username: string | null };
-  linkedin: { connected: boolean; source: 'settings' | 'environment' | null; author: 'organization' | 'person'; authorName: string | null; orgs: { urn: string; name: string | null }[]; selectedOrgUrn: string; personName: string | null; hasPerson: boolean };
+  linkedin: {
+    connected: boolean;
+    source: 'settings' | 'environment' | null;
+    author: 'organization' | 'person';
+    authorName: string | null;
+    orgs: { urn: string; name: string | null }[];
+    selectedOrgUrn: string;
+    personName: string | null;
+    hasPerson: boolean;
+  };
   problems: string[];
 }
 
@@ -174,9 +193,7 @@ export function connectionSummary(state: DeskState): ConnectionSummary {
   const envLi = env.presetLinkedIn;
 
   const fbConnected = Boolean(page?.token) || Boolean(envMeta);
-  const igConnected = fbConnected
-    ? Boolean(page?.ig?.id ?? envMeta?.igUserId)
-    : false;
+  const igConnected = fbConnected ? Boolean(page?.ig?.id ?? envMeta?.igUserId) : false;
 
   return {
     facebook: {
@@ -194,7 +211,14 @@ export function connectionSummary(state: DeskState): ConnectionSummary {
     linkedin: {
       connected: Boolean(li?.token || envLi),
       source: li?.token ? 'settings' : envLi ? 'environment' : null,
-      author: li?.author === 'organization' ? 'organization' : li?.token ? 'person' : envLi?.orgUrn ? 'organization' : 'person',
+      author:
+        li?.author === 'organization'
+          ? 'organization'
+          : li?.token
+            ? 'person'
+            : envLi?.orgUrn
+              ? 'organization'
+              : 'person',
       authorName:
         li?.author === 'organization'
           ? (li.orgs.find((o) => o.urn === li.selectedOrgUrn)?.name ?? li.selectedOrgUrn)
@@ -295,7 +319,12 @@ function explain(err: unknown): string {
 }
 
 /** Used by the OAuth callback to store what Meta handed back. */
-export async function fetchMetaBundle(userToken: string): Promise<{ pages: MetaPage[]; accountName: string | null }> {
-  const [pages, me] = await Promise.all([listUserPages(userToken), getUser(userToken).catch(() => null)]);
+export async function fetchMetaBundle(
+  userToken: string,
+): Promise<{ pages: MetaPage[]; accountName: string | null }> {
+  const [pages, me] = await Promise.all([
+    listUserPages(userToken),
+    getUser(userToken).catch(() => null),
+  ]);
   return { pages, accountName: me?.name ?? null };
 }

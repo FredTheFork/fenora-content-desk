@@ -27,9 +27,12 @@ export async function GET(req: NextRequest) {
   const code = url.searchParams.get('code');
   const state = url.searchParams.get('state');
   const cookieState = req.cookies.get('fenora_oauth_li')?.value;
-  if (!code) return back('?error=' + encodeURIComponent('LinkedIn did not return an authorisation code.'));
+  if (!code)
+    return back('?error=' + encodeURIComponent('LinkedIn did not return an authorisation code.'));
   if (!state || !cookieState || state !== cookieState) {
-    return back('?error=' + encodeURIComponent('That sign-in attempt expired. Press Connect again.'));
+    return back(
+      '?error=' + encodeURIComponent('That sign-in attempt expired. Press Connect again.'),
+    );
   }
 
   const redirectUri = `${baseUrl(req.url)}/api/connect/callback/linkedin`;
@@ -95,6 +98,8 @@ export async function GET(req: NextRequest) {
     const name = orgs.length ? (orgs[0].name ?? 'your Page') : (me?.name ?? 'your profile');
     return back(`?connected=linkedin&as=${encodeURIComponent(name)}`);
   } catch (err) {
-    return back(`?error=${encodeURIComponent((err as Error)?.message ?? 'Could not connect to LinkedIn.')}`);
+    return back(
+      `?error=${encodeURIComponent((err as Error)?.message ?? 'Could not connect to LinkedIn.')}`,
+    );
   }
 }

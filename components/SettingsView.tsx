@@ -19,8 +19,13 @@ export default function SettingsView({ data }: { data: SettingsData }) {
   const [flash, setFlash] = useState<Flash>(null);
   const [busy, setBusy] = useState('');
   const [tests, setTests] = useState<TestResult[] | null>(null);
-  const [manualOpen, setManualOpen] = useState<'meta' | 'linkedin' | null>(null);
-  const [manual, setManual] = useState({ pageId: '', pageToken: '', igUserId: '', liToken: '', liOrg: '' });
+  const [manual, setManual] = useState({
+    pageId: '',
+    pageToken: '',
+    igUserId: '',
+    liToken: '',
+    liOrg: '',
+  });
 
   const [schedule, setSchedule] = useState(data.schedule);
   const [mix, setMix] = useState<Record<string, number>>(data.schedule.mix);
@@ -35,12 +40,19 @@ export default function SettingsView({ data }: { data: SettingsData }) {
       const missing = params.get('instagramMissing');
       setFlash({
         message: `Facebook connected${page ? ` — posting to “${page}”` : ''}${
-          ig ? ` and Instagram @${ig}` : missing ? '. No Instagram Business account is linked to that Page yet.' : ''
+          ig
+            ? ` and Instagram @${ig}`
+            : missing
+              ? '. No Instagram Business account is linked to that Page yet.'
+              : ''
         }`,
         kind: missing ? 'alert' : 'ok',
       });
     } else if (connected === 'linkedin') {
-      setFlash({ message: `LinkedIn connected as ${params.get('as') ?? 'your account'}.`, kind: 'ok' });
+      setFlash({
+        message: `LinkedIn connected as ${params.get('as') ?? 'your account'}.`,
+        kind: 'ok',
+      });
     }
   }, [params]);
 
@@ -57,10 +69,17 @@ export default function SettingsView({ data }: { data: SettingsData }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
-      const json = (await res.json()) as Record<string, unknown> & { ok: boolean; error?: string; hint?: string; message?: string };
+      const json = (await res.json()) as Record<string, unknown> & {
+        ok: boolean;
+        error?: string;
+        hint?: string;
+        message?: string;
+      };
       if (!json.ok) {
         setFlash({
-          message: json.hint ? `${json.error ?? 'That did not work.'} ${json.hint}` : (json.error ?? 'That did not work.'),
+          message: json.hint
+            ? `${json.error ?? 'That did not work.'} ${json.hint}`
+            : (json.error ?? 'That did not work.'),
           kind: 'alert',
         });
         return { ok: false, data: json };
@@ -89,7 +108,10 @@ export default function SettingsView({ data }: { data: SettingsData }) {
       </div>
 
       {flash ? (
-        <div className={`banner${flash.kind === 'alert' ? ' alert' : ''}`} style={{ marginTop: 14 }}>
+        <div
+          className={`banner${flash.kind === 'alert' ? ' alert' : ''}`}
+          style={{ marginTop: 14 }}
+        >
           <div className="grow">{flash.message}</div>
           <button type="button" className="link" onClick={() => setFlash(null)}>
             Dismiss
@@ -120,7 +142,11 @@ export default function SettingsView({ data }: { data: SettingsData }) {
               setTests(null);
               try {
                 const res = await fetch('/api/test', { method: 'POST' });
-                const json = (await res.json()) as { ok: boolean; results?: TestResult[]; error?: string };
+                const json = (await res.json()) as {
+                  ok: boolean;
+                  results?: TestResult[];
+                  error?: string;
+                };
                 if (!json.ok) setFlash({ message: json.error ?? 'Test failed.', kind: 'alert' });
                 else setTests(json.results ?? []);
               } finally {
@@ -148,7 +174,9 @@ export default function SettingsView({ data }: { data: SettingsData }) {
               <select
                 value={c.facebook.pageId ?? ''}
                 style={{ width: 220 }}
-                onChange={(e) => send('/api/settings', { action: 'select-page', pageId: e.target.value }, 'page')}
+                onChange={(e) =>
+                  send('/api/settings', { action: 'select-page', pageId: e.target.value }, 'page')
+                }
               >
                 {c.facebook.pages.map((page) => (
                   <option key={page.id} value={page.id}>
@@ -162,7 +190,13 @@ export default function SettingsView({ data }: { data: SettingsData }) {
                 type="button"
                 className="btn sm ghost"
                 disabled={busy === 'disconnect-meta'}
-                onClick={() => send('/api/settings', { action: 'disconnect', provider: 'meta' }, 'disconnect-meta')}
+                onClick={() =>
+                  send(
+                    '/api/settings',
+                    { action: 'disconnect', provider: 'meta' },
+                    'disconnect-meta',
+                  )
+                }
               >
                 Disconnect
               </button>
@@ -199,16 +233,28 @@ export default function SettingsView({ data }: { data: SettingsData }) {
                   : 'Not connected.'}
               </div>
             </div>
-            {c.linkedin.connected && (c.linkedin.orgs.length > 1 || (c.linkedin.hasPerson && c.linkedin.author !== 'person')) ? (
+            {c.linkedin.connected &&
+            (c.linkedin.orgs.length > 1 ||
+              (c.linkedin.hasPerson && c.linkedin.author !== 'person')) ? (
               <select
-                value={c.linkedin.author === 'organization' ? c.linkedin.selectedOrgUrn : '__person'}
+                value={
+                  c.linkedin.author === 'organization' ? c.linkedin.selectedOrgUrn : '__person'
+                }
                 style={{ width: 230 }}
                 onChange={(e) => {
                   const value = e.target.value;
                   if (value === '__person') {
-                    send('/api/settings', { action: 'select-linkedin', author: 'person' }, 'li-author');
+                    send(
+                      '/api/settings',
+                      { action: 'select-linkedin', author: 'person' },
+                      'li-author',
+                    );
                   } else {
-                    send('/api/settings', { action: 'select-linkedin', author: 'organization', orgUrn: value }, 'li-author');
+                    send(
+                      '/api/settings',
+                      { action: 'select-linkedin', author: 'organization', orgUrn: value },
+                      'li-author',
+                    );
                   }
                 }}
               >
@@ -217,7 +263,9 @@ export default function SettingsView({ data }: { data: SettingsData }) {
                     {org.name ?? org.urn}
                   </option>
                 ))}
-                {c.linkedin.hasPerson ? <option value="__person">Your personal profile</option> : null}
+                {c.linkedin.hasPerson ? (
+                  <option value="__person">Your personal profile</option>
+                ) : null}
               </select>
             ) : null}
             {c.linkedin.connected && c.linkedin.source === 'settings' ? (
@@ -225,7 +273,13 @@ export default function SettingsView({ data }: { data: SettingsData }) {
                 type="button"
                 className="btn sm ghost"
                 disabled={busy === 'disconnect-li'}
-                onClick={() => send('/api/settings', { action: 'disconnect', provider: 'linkedin' }, 'disconnect-li')}
+                onClick={() =>
+                  send(
+                    '/api/settings',
+                    { action: 'disconnect', provider: 'linkedin' },
+                    'disconnect-li',
+                  )
+                }
               >
                 Disconnect
               </button>
@@ -238,139 +292,137 @@ export default function SettingsView({ data }: { data: SettingsData }) {
           {!env.metaApp && !c.facebook.connected ? (
             <div className="banner" style={{ marginTop: 14 }}>
               <div className="grow">
-                One-click connecting needs <code>META_APP_ID</code> and <code>META_APP_SECRET</code> from a
-                Meta app. Without them you can still paste a Page token below.
+                One-click connecting needs <code>META_APP_ID</code> and <code>META_APP_SECRET</code>{' '}
+                from a Meta app. Without them you can still paste a Page token below.
               </div>
             </div>
           ) : null}
           {!env.linkedinApp && !c.linkedin.connected ? (
             <div className="banner" style={{ marginTop: 8 }}>
               <div className="grow">
-                One-click connecting needs <code>LINKEDIN_CLIENT_ID</code> and <code>LINKEDIN_CLIENT_SECRET</code>.
-                Without them you can still paste a token below.
+                One-click connecting needs <code>LINKEDIN_CLIENT_ID</code> and{' '}
+                <code>LINKEDIN_CLIENT_SECRET</code>. Without them you can still paste a token below.
               </div>
             </div>
           ) : null}
 
           <details className="manual">
-            <summary
-              onClick={() => setManualOpen(manualOpen === 'meta' ? null : 'meta')}
-              role="button"
-            >
-              Paste a Facebook / Instagram token instead
-            </summary>
-            {manualOpen === 'meta' ? (
-              <div>
-                <div className="field">
-                  <label htmlFor="m-page">Facebook Page ID</label>
-                  <input
-                    id="m-page"
-                    value={manual.pageId}
-                    placeholder="10223…"
-                    onChange={(e) => setManual({ ...manual, pageId: e.target.value })}
-                  />
-                  <div className="hint">Leave blank and the desk will list the Pages your token can see.</div>
+            <summary>Paste a Facebook / Instagram token instead</summary>
+            <div>
+              <div className="field">
+                <label htmlFor="m-page">Facebook Page ID</label>
+                <input
+                  id="m-page"
+                  value={manual.pageId}
+                  placeholder="10223…"
+                  onChange={(e) => setManual({ ...manual, pageId: e.target.value })}
+                />
+                <div className="hint">
+                  Leave blank and the desk will list the Pages your token can see.
                 </div>
-                <div className="field">
-                  <label htmlFor="m-token">Page or user access token</label>
-                  <input
-                    id="m-token"
-                    type="password"
-                    value={manual.pageToken}
-                    placeholder="EAAG…"
-                    onChange={(e) => setManual({ ...manual, pageToken: e.target.value })}
-                  />
-                  <div className="hint">
-                    Needs pages_show_list, pages_manage_posts and instagram_content_publish. A long-lived token is
-                    best; the desk asks Meta for the Page token itself.
-                  </div>
-                </div>
-                <div className="field">
-                  <label htmlFor="m-ig">Instagram Business account ID (optional)</label>
-                  <input
-                    id="m-ig"
-                    value={manual.igUserId}
-                    placeholder="1784140…"
-                    onChange={(e) => setManual({ ...manual, igUserId: e.target.value })}
-                  />
-                </div>
-                <button
-                  type="button"
-                  className="btn sm"
-                  disabled={busy === 'manual-meta' || !manual.pageToken}
-                  onClick={() =>
-                    send(
-                      '/api/settings',
-                      {
-                        action: 'manual-meta',
-                        pageId: manual.pageId,
-                        pageToken: manual.pageToken,
-                        igUserId: manual.igUserId,
-                      },
-                      'manual-meta',
-                    )
-                  }
-                >
-                  {busy === 'manual-meta' ? 'Checking…' : 'Connect with this token'}
-                </button>
               </div>
-            ) : null}
+              <div className="field">
+                <label htmlFor="m-token">Page or user access token</label>
+                <input
+                  id="m-token"
+                  type="password"
+                  value={manual.pageToken}
+                  placeholder="EAAG…"
+                  onChange={(e) => setManual({ ...manual, pageToken: e.target.value })}
+                />
+                <div className="hint">
+                  Needs pages_show_list, pages_manage_posts and instagram_content_publish. A
+                  long-lived token is best; the desk asks Meta for the Page token itself.
+                </div>
+              </div>
+              <div className="field">
+                <label htmlFor="m-ig">Instagram Business account ID (optional)</label>
+                <input
+                  id="m-ig"
+                  value={manual.igUserId}
+                  placeholder="1784140…"
+                  onChange={(e) => setManual({ ...manual, igUserId: e.target.value })}
+                />
+              </div>
+              <button
+                type="button"
+                className="btn sm"
+                disabled={busy === 'manual-meta' || !manual.pageToken}
+                onClick={() =>
+                  send(
+                    '/api/settings',
+                    {
+                      action: 'manual-meta',
+                      pageId: manual.pageId,
+                      pageToken: manual.pageToken,
+                      igUserId: manual.igUserId,
+                    },
+                    'manual-meta',
+                  )
+                }
+              >
+                {busy === 'manual-meta' ? 'Checking…' : 'Connect with this token'}
+              </button>
+            </div>
           </details>
 
           <details className="manual">
-            <summary
-              onClick={() => setManualOpen(manualOpen === 'linkedin' ? null : 'linkedin')}
-              role="button"
-            >
-              Paste a LinkedIn token instead
-            </summary>
-            {manualOpen === 'linkedin' ? (
-              <div>
-                <div className="field">
-                  <label htmlFor="l-token">LinkedIn access token</label>
-                  <input
-                    id="l-token"
-                    type="password"
-                    value={manual.liToken}
-                    placeholder="AQV…"
-                    onChange={(e) => setManual({ ...manual, liToken: e.target.value })}
-                  />
-                  <div className="hint">Needs w_organization_social (Page) or w_member_social (your profile).</div>
+            <summary>Paste a LinkedIn token instead</summary>
+            <div>
+              <div className="field">
+                <label htmlFor="l-token">LinkedIn access token</label>
+                <input
+                  id="l-token"
+                  type="password"
+                  value={manual.liToken}
+                  placeholder="AQV…"
+                  onChange={(e) => setManual({ ...manual, liToken: e.target.value })}
+                />
+                <div className="hint">
+                  Needs w_organization_social (Page) or w_member_social (your profile).
                 </div>
-                <div className="field">
-                  <label htmlFor="l-org">Company Page URN (optional)</label>
-                  <input
-                    id="l-org"
-                    value={manual.liOrg}
-                    placeholder="urn:li:organization:12345678"
-                    onChange={(e) => setManual({ ...manual, liOrg: e.target.value })}
-                  />
-                </div>
-                <button
-                  type="button"
-                  className="btn sm"
-                  disabled={busy === 'manual-linkedin' || !manual.liToken}
-                  onClick={() =>
-                    send(
-                      '/api/settings',
-                      { action: 'manual-linkedin', token: manual.liToken, orgUrn: manual.liOrg },
-                      'manual-linkedin',
-                    )
-                  }
-                >
-                  {busy === 'manual-linkedin' ? 'Checking…' : 'Connect with this token'}
-                </button>
               </div>
-            ) : null}
+              <div className="field">
+                <label htmlFor="l-org">Company Page URN (optional)</label>
+                <input
+                  id="l-org"
+                  value={manual.liOrg}
+                  placeholder="urn:li:organization:12345678"
+                  onChange={(e) => setManual({ ...manual, liOrg: e.target.value })}
+                />
+              </div>
+              <button
+                type="button"
+                className="btn sm"
+                disabled={busy === 'manual-linkedin' || !manual.liToken}
+                onClick={() =>
+                  send(
+                    '/api/settings',
+                    { action: 'manual-linkedin', token: manual.liToken, orgUrn: manual.liOrg },
+                    'manual-linkedin',
+                  )
+                }
+              >
+                {busy === 'manual-linkedin' ? 'Checking…' : 'Connect with this token'}
+              </button>
+            </div>
           </details>
         </div>
 
         {tests ? (
           <div style={{ marginTop: 14 }}>
             {tests.map((test) => (
-              <div className={`banner${test.ok ? '' : ' alert'}`} key={test.provider} style={{ marginBottom: 8 }}>
+              <div
+                className={`banner${test.ok ? '' : ' alert'}`}
+                key={test.provider}
+                style={{ marginBottom: 8 }}
+              >
                 <strong style={{ width: 90, display: 'inline-block' }}>
-                  {test.provider === 'facebook' ? 'Facebook' : test.provider === 'instagram' ? 'Instagram' : 'LinkedIn'}
+                  {test.provider === 'facebook'
+                    ? 'Facebook'
+                    : test.provider === 'instagram'
+                      ? 'Instagram'
+                      : 'LinkedIn'}
                 </strong>
                 <div className="grow">{test.detail}</div>
               </div>
@@ -460,16 +512,23 @@ export default function SettingsView({ data }: { data: SettingsData }) {
                 );
               })}
             </div>
-            <div className="hint">Weekdays only is the strategy: five posts a week, every week.</div>
+            <div className="hint">
+              Weekdays only is the strategy: five posts a week, every week.
+            </div>
           </div>
 
           <div className="field">
             <label>Pillar mix</label>
             <div className="hint" style={{ marginBottom: 10 }}>
-              Higher weight means more of that pillar in the calendar. The planner balances it week by week.
+              Higher weight means more of that pillar in the calendar. The planner balances it week
+              by week.
             </div>
             {data.pillars.map((pillar) => (
-              <div key={pillar.key} className="inline" style={{ alignItems: 'center', marginBottom: 6 }}>
+              <div
+                key={pillar.key}
+                className="inline"
+                style={{ alignItems: 'center', marginBottom: 6 }}
+              >
                 <span style={{ width: 160 }} className="small">
                   {pillar.label}
                 </span>
@@ -499,8 +558,10 @@ export default function SettingsView({ data }: { data: SettingsData }) {
               Publish automatically when a post comes due
             </label>
             <div className="hint">
-              Uses the daily cron at 09:00 UTC. {env.cronSecret ? 'CRON_SECRET is set.' : 'Set CRON_SECRET to enable it.'}{' '}
-              Leave this off if you would rather press the buttons yourself — nothing publishes twice either way.
+              Uses the daily cron at 09:00 UTC.{' '}
+              {env.cronSecret ? 'CRON_SECRET is set.' : 'Set CRON_SECRET to enable it.'} Leave this
+              off if you would rather press the buttons yourself — nothing publishes twice either
+              way.
             </div>
           </div>
 
@@ -588,7 +649,11 @@ export default function SettingsView({ data }: { data: SettingsData }) {
                   : 'not set — tokens are stored unencrypted in your database'}
               </dd>
               <dt>CRON_SECRET</dt>
-              <dd>{env.cronSecret ? 'set — the cron endpoint is protected' : 'not set — auto-publishing is off'}</dd>
+              <dd>
+                {env.cronSecret
+                  ? 'set — the cron endpoint is protected'
+                  : 'not set — auto-publishing is off'}
+              </dd>
               <dt>PUBLIC_BASE_URL</dt>
               <dd>{env.publicBaseUrl ? data.origin : 'automatic (Vercel production domain)'}</dd>
             </div>
@@ -613,17 +678,20 @@ ${data.origin}/api/connect/callback/linkedin`}</pre>
         </div>
         <div className="panel" style={{ marginTop: 16 }}>
           <ol className="lede" style={{ paddingLeft: 20, margin: 0 }}>
-            <li>Open the desk. Today&apos;s post is at the top with its finished image and captions.</li>
             <li>
-              Press <strong>Post to all</strong>, or a single platform. The image and the right caption for that
-              platform go out — the caption is already written per platform.
+              Open the desk. Today&apos;s post is at the top with its finished image and captions.
             </li>
             <li>
-              If Meta or LinkedIn objects, the exact reason appears under the post. Fix it and press again: nothing
-              is ever posted twice.
+              Press <strong>Post to all</strong>, or a single platform. The image and the right
+              caption for that platform go out — the caption is already written per platform.
             </li>
             <li>
-              Edit any caption in <strong>Details</strong> — your version is kept and used from then on.
+              If Meta or LinkedIn objects, the exact reason appears under the post. Fix it and press
+              again: nothing is ever posted twice.
+            </li>
+            <li>
+              Edit any caption in <strong>Details</strong> — your version is kept and used from then
+              on.
             </li>
           </ol>
         </div>

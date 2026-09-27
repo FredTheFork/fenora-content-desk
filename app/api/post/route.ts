@@ -34,9 +34,9 @@ export async function GET(req: NextRequest) {
     captions: Object.fromEntries(
       PLATFORMS.map((p) => [p, captionFor(post, p, overrides)]),
     ) as Record<Platform, string>,
-    edited: Object.fromEntries(
-      PLATFORMS.map((p) => [p, Boolean(overrides[p])]),
-    ) as Partial<Record<Platform, boolean>>,
+    edited: Object.fromEntries(PLATFORMS.map((p) => [p, Boolean(overrides[p])])) as Partial<
+      Record<Platform, boolean>
+    >,
     published: Object.fromEntries(
       PLATFORMS.filter((p) => published[p]).map((p) => [
         p,

@@ -57,7 +57,8 @@ export function open<T>(sealed: string | undefined | null): OpenResult<T> {
   } catch {
     return {
       ok: false,
-      reason: 'Stored credentials could not be decrypted — DESK_SECRET has changed since they were saved.',
+      reason:
+        'Stored credentials could not be decrypted — DESK_SECRET has changed since they were saved.',
     };
   }
 }

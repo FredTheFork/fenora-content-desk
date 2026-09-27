@@ -23,7 +23,13 @@ export interface PlanOptions {
   ignoreCap?: boolean;
 }
 
-export function planSchedule({ posts, config, unavailable, from, days }: PlanOptions): ScheduleEntry[] {
+export function planSchedule({
+  posts,
+  config,
+  unavailable,
+  from,
+  days,
+}: PlanOptions): ScheduleEntry[] {
   const pool = posts.filter((p) => !unavailable.has(p.id));
   if (!pool.length) return [];
 
@@ -52,9 +58,7 @@ export function planSchedule({ posts, config, unavailable, from, days }: PlanOpt
 
   const take = (pillar: string, formats: string[] | null): Post | null => {
     const list = byPillar.get(pillar) ?? [];
-    const pick = list.find(
-      (p) => !taken.has(p.id) && (!formats || formats.includes(p.format)),
-    );
+    const pick = list.find((p) => !taken.has(p.id) && (!formats || formats.includes(p.format)));
     return pick ?? null;
   };
 
@@ -119,7 +123,11 @@ export function planSchedule({ posts, config, unavailable, from, days }: PlanOpt
 
 export function sortEntries(entries: ScheduleEntry[]): ScheduleEntry[] {
   return [...entries].sort((a, b) =>
-    `${a.date} ${a.time}` < `${b.date} ${b.time}` ? -1 : `${a.date} ${a.time}` > `${b.date} ${b.time}` ? 1 : 0,
+    `${a.date} ${a.time}` < `${b.date} ${b.time}`
+      ? -1
+      : `${a.date} ${a.time}` > `${b.date} ${b.time}`
+        ? 1
+        : 0,
   );
 }
 
