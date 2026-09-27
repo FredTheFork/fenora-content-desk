@@ -78,7 +78,7 @@ function autoCap(p, plat) {
   sf.innerHTML = '<option value="">All formats</option>' +
     Object.entries(PFMT).map(([k,v]) => `<option value="${k}">${v}</option>`).join('');
 
-  buildTemplates(); loadCfg(); render(); drawCal(); renderToday();
+  loadCfg(); render(); drawCal(); renderToday();
 })();
 
 /* ══════════════ TABS ══════════════ */
