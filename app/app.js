@@ -4,7 +4,7 @@
 
 const $  = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
-const S  = { posts: [], sched: {}, images: new Set(), cfg: { configured: {}, defaults: {} },
+const S  = { posts: [], sched: {}, images: new Set(), jpgs: new Set(), cfg: { configured: {}, defaults: {} },
              filters: { q:'', pillar:'', format:'', status:'' }, today: null };
 const LS = 'fenora.desk.v2';
 const PFMT = { static:'Static', reel:'Reel', carousel:'Carousel', poll:'Poll', quiz:'Quiz', story:'Story', text:'Long-form' };
@@ -31,11 +31,18 @@ const copy = async (txt,msg) => { try { await navigator.clipboard.writeText(txt)
   catch { const a=document.createElement('textarea'); a.value=txt; document.body.appendChild(a);
     a.select(); document.execCommand('copy'); a.remove(); toast(msg||'Copied','ok'); } };
 
-/* Image files produced by render/render.py → served at /render/out/ */
+/* Image files produced by render/render.py → served at /render/out/
+   tools/to_jpg.py also writes a matching set into /render/jpg/. We prefer the
+   JPEG when it exists (5× lighter for the browser) and fall back to the PNG. */
 const imgURL = (id,size) => {
-  const f = `${id}_${size||'4x5'}.png`;
-  return S.images.has(f) ? `../render/out/${f}` : null;
+  const s = size || '4x5';
+  const j = `${id}_${s}.jpg`, p = `${id}_${s}.png`;
+  if (S.jpgs.has(j)) return `../render/jpg/${j}`;
+  return S.images.has(p) ? `../render/out/${p}` : null;
 };
+const dlURL = (id,size) => { const s = size || '4x5';
+  return S.jpgs.has(`${id}_${s}.jpg`) ? `../render/jpg/${id}_${s}.jpg`
+       : S.images.has(`${id}_${s}.png`) ? `../render/out/${id}_${s}.png` : null; };
 const aspectOf = p => p.format === 'reel' || p.format === 'story' ? '9x16' : '4x5';
 
 /* ══════════════ CAPTION ENGINE ══════════════ */
@@ -53,11 +60,15 @@ function autoCap(p, plat) {
   const s = sched(p.id);
   const hook = s.hook || p.hook, body = s.body || p.body, cta = s.cta ?? p.cta, lead = s.liLead || '';
   const b = dedup(hook, body);
-  if (plat === 'IG') return [hook,'',b, cta?['',cta]:'','',BANNER,'',
+  // Build with spreads, never a nested array — Array.join() would stringify
+  // an inner ['', x] as ",x" and glue a stray comma onto the caption.
+  const gap = x => x ? ['', x] : [];
+  if (plat === 'IG') return [hook,'',b,...gap(cta),'',BANNER,'',
     p.caption_ig.split('\n').filter(l=>l.startsWith('#')).join(' ')].filter(Boolean).join('\n');
-  if (plat === 'FB') return [hook,'',b, cta?['',cta]:'','',BANNER].filter(Boolean).join('\n');
+  if (plat === 'FB') return [hook,'',b,...gap(cta),'',BANNER].filter(Boolean).join('\n');
   const L = lead || hook, bl = lead ? dedup(lead, body) : b;
-  return [L, bl?['', p.format==='carousel'?flatten(bl):bl]:'', cta?['',cta]:'','','— fenora.pro'].filter(Boolean).join('\n');
+  return [L,...gap(p.format==='carousel' ? flatten(bl) : bl),...gap(cta),'','— fenora.pro']
+    .filter(Boolean).join('\n');
 }
 
 /* ══════════════ BOOT ══════════════ */
@@ -69,7 +80,9 @@ function autoCap(p, plat) {
   S.posts.forEach(p => { const s = sched(p.id);
     if (!s.hook) s.hook = p.hook; if (!s.body) s.body = p.body;
     if (!s.platforms?.length) s.platforms = p.platforms.split(','); if (s.cta === undefined) s.cta = p.cta; });
-  try { const im = await (await fetch('../api/images')).json(); (im.files||[]).forEach(f => S.images.add(f)); } catch {}
+  try { const im = await (await fetch('../api/images')).json();
+    (im.files||[]).forEach(f => S.images.add(f));
+    (im.jpgs||[]).forEach(f => S.jpgs.add(f)); } catch {}
 
   const sel = $('#f-pillar');
   sel.innerHTML = '<option value="">All pillars</option>' +
@@ -141,6 +154,7 @@ function renderToday(){
   const id = (S.posts.find(p => sched(p.id).date === iso(d)) || {}).id;
   const p = id ? find(id) : null;
   const im = p ? imgURL(p.id) : null;
+  const dl = p ? dlURL(p.id) : null;
   const side = p ? `
     <h2>${esc(sched(p.id).hook || p.hook)}</h2>
     <p class="lede">${p.pillar_label} · ${PFMT[p.format]||p.format} · <span class="mono">${p.id}</span></p>
@@ -155,7 +169,7 @@ function renderToday(){
         <div class="bar"><button class="btn sm" data-copy="${key}">Copy ${label} caption</button></div>
       </div>`; }).join('')}
     <div class="row gap" style="margin-top:14px">
-      <a class="btn ghost sm" href="${im ? '../render/out/'+p.id+'_'+aspectOf(p).replace(':','x')+'.png' : '#'}" download>Download image</a>
+      <a class="btn ghost sm" href="${dl || '#'}" download>Download image</a>
       <button class="btn ghost sm" data-edit="${p.id}">Edit</button>
     </div>
     <button class="done ${sched(p.id).status==='posted'?'on':''}" data-done="${p.id}">
@@ -212,8 +226,7 @@ function openPost(id){
 }
 function setImage(){
   const p = find(CUR); if (!p) return;
-  const f = `${CUR}_${$('#c-size').value}.png`;
-  const url = S.images.has(f) ? `../render/out/${f}` : null;
+  const url = imgURL(CUR, $('#c-size').value);
   const im = $('#c-image');
   if (url) { im.src = url; im.style.display='block'; $('#c-dl').href = url; $('#c-open').href = url;
     $('#c-dl').style.display=''; $('#c-open').style.display=''; }

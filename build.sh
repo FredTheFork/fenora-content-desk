@@ -34,11 +34,16 @@ fi
 echo "Rendering images (251 posts, ~10 minutes)…"
 (cd render && python3 render.py)
 
+echo "Exporting JPEG copies (what the platforms actually want)…"
+python3 tools/to_jpg.py
+
 echo "Zipping…"
-(cd render/out && zip -q -r ../../fenora-images.zip .)
+rm -f fenora-images.zip
+(cd render && zip -q -r ../fenora-images.zip jpg)
 echo
-echo "✅ $(ls render/out/*.png | wc -l) images"
-echo "   render/out/    ready to upload"
-echo "   fenora-images.zip"
+echo "✅ $(ls render/out/*.png | wc -l) PNGs  ·  $(ls render/jpg/*.jpg | wc -l) JPEGs"
+echo "   render/out/          print-quality masters"
+echo "   render/jpg/          upload-ready (22 MB total)"
+echo "   fenora-images.zip    the whole set, zipped"
 echo
 echo "Now:  node server.js   →  http://localhost:4321"

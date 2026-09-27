@@ -11,10 +11,14 @@ node_modules/
 __pycache__/
 *.pyc
 
-# Rendered PNGs are ~250MB and reproducible in ~10 minutes:
-#   cd render && python3 render.py
-# Uncomment the next line if you'd rather commit them.
+# Rendered images are ~140MB and reproducible in ~10 minutes:
+#   cd render && python3 render.py && python3 tools/to_jpg.py
+# Uncomment the next lines if you'd rather commit them.
 render/out/
+render/jpg/
+
+# Download bundles, produced by build.sh
+fenora-images.zip
 
 # AI-generated hero photos (regenerate or replace freely)
 # assets/ai/*.png   (uncomment to exclude the AI hero photos)

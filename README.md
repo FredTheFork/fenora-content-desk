@@ -44,6 +44,8 @@ the post is about. The full strategy is in **[STRATEGY.md](STRATEGY.md)**.
 ├── render/
 │   ├── core.py              brand image renderer: layout system + window geometry
 │   └── render.py            produces a designed PNG for every post
+├── tools/
+│   └── to_jpg.py            PNG → upload-ready JPEG (116 MB → 22 MB)
 └── assets/
     ├── fonts/               Montserrat variable
     └── ai/                  AI hero photos (composited by the renderer)
@@ -111,7 +113,19 @@ Light and dark cards alternate so a profile grid has rhythm.
 it as a full-bleed photo with a legibility plate; otherwise it draws the card. The
 12 shipped ones cover the posts where a photograph genuinely beats a graphic.
 
+Each post is rendered at **4:5** (Instagram + Facebook feed) and the 32
+vertical formats also get **9:16** (Stories / Reels cover) — 283 files in all.
+
+`tools/to_jpg.py` then writes a matching JPEG set into `render/jpg/` at
+quality 92 with 4:4:4 chroma. The dashboard and the zip bundle both prefer
+those, which takes the set from 116 MB to 22 MB with no visible loss on text.
+Use `render/out/` when you want the print masters.
+
 Requires Pillow. Montserrat (variable) is vendored in `assets/fonts/`.
+
+```bash
+./build.sh            # compile content → render 283 PNGs → export JPEG → zip
+```
 
 ---
 

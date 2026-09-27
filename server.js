@@ -211,10 +211,11 @@ async function api(req, res, pathname) {
   }
 
   if (pathname === '/api/images') {
-    const dir = path.join(ROOT, 'render', 'out');
-    let files = [];
-    try { files = fs.readdirSync(dir).filter(f => f.endsWith('.png')); } catch {}
-    return json(res, 200, { files });
+    const list = (dir, ext) => { try { return fs.readdirSync(dir).filter(f => f.endsWith(ext)); } catch { return []; } };
+    return json(res, 200, {
+      files: list(path.join(ROOT, 'render', 'out'), '.png'),   // print masters
+      jpgs:  list(path.join(ROOT, 'render', 'jpg'), '.jpg'),   // upload-ready
+    });
   }
 
   if (pathname === '/api/load') {
