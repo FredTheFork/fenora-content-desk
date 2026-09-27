@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fenora Content Desk</title>
+<link rel="stylesheet" href="styles.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%231a1d21'/><path d='M16 6a10 8 0 0 1 10 8v12H6V14A8 8 0 0 1 16 6z' fill='none' stroke='%23f26b21' stroke-width='2'/><path d='M16 7v19M7 15h18' stroke='%23f26b21' stroke-width='1.6'/></svg>">
+</head>
+<body>
+
+<header class="top">
+  <a class="brand" href="#" data-go="today">
+    <svg viewBox="0 0 32 32" class="logo"><rect width="32" height="32" rx="7" fill="#1a1d21"/><path d="M16 6a10 8 0 0 1 10 8v12H6V14A8 8 0 0 1 16 6z" fill="none" stroke="#f26b21" stroke-width="2"/><path d="M16 7v19M7 15h18" stroke="#f26b21" stroke-width="1.6"/></svg>
+    <span>Fenora <b>Content Desk</b></span>
+  </a>
+  <nav class="tabs" id="tabs">
+    <button data-tab="today" class="on">Today</button>
+    <button data-tab="library">Library</button>
+    <button data-tab="calendar">Calendar</button>
+    <button data-tab="engage">Engage</button>
+  </nav>
+  <div class="top-actions">
+    <button class="icon-btn" id="btn-setup" title="Setup">⚙</button>
+  </div>
+</header>
+
+<main>
+
+<!-- ════════════════════ TODAY ════════════════════ -->
+<section class="tab on" id="tab-today">
+  <div class="today-wrap" id="today"></div>
+</section>
+
+<!-- ════════════════════ LIBRARY ════════════════════ -->
+<section class="tab" id="tab-library">
+  <div class="toolbar">
+    <input id="q" type="search" placeholder="Search 251 posts — reveal, sash, planning, margin…" autocomplete="off">
+    <div class="selects">
+      <select id="f-pillar"><option value="">All pillars</option></select>
+      <select id="f-format"><option value="">All formats</option></select>
+      <select id="f-status">
+        <option value="">Any status</option>
+        <option value="draft">Unscheduled</option>
+        <option value="scheduled">Scheduled</option>
+        <option value="posted">Posted</option>
+      </select>
+    </div>
+    <span class="count" id="lib-count"></span>
+  </div>
+  <div class="lib" id="lib"></div>
+</section>
+
+<!-- ════════════════════ CALENDAR ════════════════════ -->
+<section class="tab" id="tab-calendar">
+  <div class="cal-head">
+    <button class="btn ghost sm" id="cal-prev">←</button>
+    <h2 id="cal-title">—</h2>
+    <button class="btn ghost sm" id="cal-next">→</button>
+    <div class="grow"></div>
+    <button class="btn sm" id="btn-autofill2">⚡ Fill 90 days</button>
+  </div>
+  <div class="cal-dow" id="cal-dow"></div>
+  <div class="cal-grid" id="cal-grid"></div>
+  <p class="cal-foot">Drag any card from the <b>Library</b> onto a date to schedule it. Click a scheduled post to open it. Click an empty day to fill it automatically.</p>
+</section>
+
+<!-- ════════════════════ ENGAGE ════════════════════ -->
+<section class="tab" id="tab-engage">
+  <div class="engage-grid">
+    <div class="panel">
+      <h2>The 20-minute daily routine</h2>
+      <p class="lede">The half of the strategy that isn't your own posts. Same time every day. Never pitch.</p>
+      <ol class="routine">
+        <li><b>0–4 min — Search.</b> On Instagram and TikTok: <em>window fitter</em>, <em>double glazing fail</em>, <em>cowboy builder caught</em>, <em>trades life</em>, <em>plasterer</em>, <em>joiner</em>, <em>survey fail</em>, <em>conservation area</em>, <em>kitchen extension fail</em>, <em>build in public</em>. Plus every trades account near you.</li>
+        <li><b>4–10 min — Watch properly.</b> 20–30 seconds each. Skip in under 2 seconds and your whole feed suffers.</li>
+        <li><b>10–18 min — Eight comments.</b> On the specific thing in that video, not a lazy fire emoji. Use the templates. Reply to every reply.</li>
+        <li><b>18–20 min — Log it.</b> Tick the counter. That is the whole discipline.</li>
+      </ol>
+      <div class="counter">
+        <div><b id="eng-count">0</b><span>comments today</span></div>
+        <button class="btn sm" id="eng-plus">+1</button>
+        <button class="btn ghost sm" id="eng-reset">Reset</button>
+      </div>
+      <p class="rule"><b>The one rule:</b> never pitch. Not once. The moment you comment "we do this too" you become an ad and the account dies. Add value, be funny, let people find you.</p>
+    </div>
+    <div class="panel">
+      <h2>Comment templates</h2>
+      <p class="lede">Click to copy. The good ones add a fact the creator didn't mention — that's what gets you a follow.</p>
+      <div id="tpl-list" class="tpls"></div>
+    </div>
+    <div class="panel">
+      <h2>Who to look for</h2>
+      <ul class="targets">
+        <li><b>Window &amp; glazing trade</b><br><span class="mono">#windowfitter #doubleglazing #sashwindows #glazier #fenestration</span></li>
+        <li><b>Adjacent trades, same people</b><br><span class="mono">#plasterer #joiner #bricklayer #roofer #electrician #builder</span></li>
+        <li><b>Failure &amp; fix accounts</b> — the "bad build" reels have enormous reach, and your trade's failures are the funniest ones on earth.</li>
+        <li><b>Build-in-public SaaS</b> — follow 10 and study the <em>format</em>, not the product.</li>
+        <li><b>Your local area</b> — every builder and fitter within 20 miles. Comment on <em>their</em> work properly for 30 days and watch what happens.</li>
+      </ul>
+      <h3 class="mt">The whole plan</h3>
+      <div class="budget">
+        <div><b>5×</b><span>posts / week</span></div>
+        <div><b>7×</b><span>stories / week</span></div>
+        <div><b>20m</b><span>comments / day</span></div>
+        <div><b>0</b><span>pitches ever</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- ════════════════════ COMPOSER (drawer) ════════════════════ -->
+<div class="drawer" id="drawer" hidden>
+  <div class="drawer-scrim" data-close></div>
+  <div class="drawer-panel">
+    <header class="drawer-head">
+      <span class="mono" id="c-id">—</span>
+      <span class="pill" id="c-pillar">—</span>
+      <span class="pill" id="c-format">—</span>
+      <div class="grow"></div>
+      <button class="icon-btn" data-close>✕</button>
+    </header>
+    <div class="drawer-body">
+      <div class="col-img">
+        <img id="c-image" alt="">
+        <div class="img-bar">
+          <select id="c-size" class="mini"><option value="4x5">4:5 feed</option><option value="9x16">9:16 reel</option><option value="1x1">1:1</option></select>
+          <a class="btn ghost sm" id="c-dl" download>Download PNG</a>
+          <a class="btn ghost sm" id="c-open" target="_blank">Open full size</a>
+        </div>
+        <div class="fgroup"><label>Schedule</label>
+          <div class="row gap">
+            <select id="c-date" class="mini grow"></select>
+            <input id="c-time" type="time" class="mini">
+          </div>
+        </div>
+        <div class="fgroup"><label>Post to</label><div class="chips" id="c-platforms"></div></div>
+        <div class="fgroup"><label>Image generator prompt <span class="muted">(if you'd rather generate your own)</span></label>
+          <textarea id="c-prompt" rows="4" class="mono small"></textarea>
+          <button class="btn ghost sm" id="c-copy-prompt">Copy prompt</button>
+        </div>
+      </div>
+      <div class="col-txt">
+        <div class="fgroup"><label>Hook <span class="muted">— the big text on the image</span></label>
+          <textarea id="c-hook" rows="2"></textarea></div>
+        <div class="fgroup"><label>Caption</label><textarea id="c-body" rows="10"></textarea></div>
+        <div class="fgroup"><label>LinkedIn lead <span class="muted">(optional, overrides the hook there)</span></label>
+          <textarea id="c-lilead" rows="2"></textarea></div>
+        <div class="fgroup"><label>Public image URL <span class="muted">(only needed to auto-post to Instagram)</span></label>
+          <input id="c-imgurl" type="url" placeholder="https://…"></div>
+        <div class="cap-tabs" id="cap-tabs"></div>
+        <textarea id="cap" rows="12"></textarea>
+        <div class="cap-bar">
+          <button class="btn sm" id="cap-copy">Copy caption</button>
+          <button class="btn ghost sm" id="cap-reset">Reset</button>
+          <div class="grow"></div>
+          <span class="muted small" id="cap-count"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════ SETUP (drawer) ════════════════════ -->
+<div class="drawer" id="setup" hidden>
+  <div class="drawer-scrim" data-setup-close></div>
+  <div class="drawer-panel wide">
+    <header class="drawer-head"><b>Setup</b><div class="grow"></div><button class="icon-btn" data-setup-close>✕</button></header>
+    <div class="drawer-body single">
+      <div class="setup-grid">
+        <section>
+          <h2>Posting to</h2>
+          <div id="conn-status" class="conn"></div>
+          <p class="muted small">Without these, everything still works in <b>copy mode</b> — one click puts the right caption on your clipboard.</p>
+          <div class="fgroup"><label>Instagram Business account ID</label><input id="s-iguser" placeholder="1784140…"></div>
+          <div class="fgroup"><label>Meta access token <span class="muted">(instagram_content_publish + pages_manage_posts)</span></label><input id="s-mtoken" type="password" placeholder="EAAG…"></div>
+          <div class="fgroup"><label>Facebook Page ID</label><input id="s-pageid" placeholder="10223…"></div>
+          <div class="fgroup"><label>Facebook Page token</label><input id="s-ptoken" type="password" placeholder="EAAG…"></div>
+          <div class="fgroup"><label>LinkedIn organisation URN</label><input id="s-orgurn" placeholder="urn:li:organization:…"></div>
+          <div class="fgroup"><label>LinkedIn access token <span class="muted">(w_organization_social)</span></label><input id="s-litoken" type="password" placeholder="AQV…"></div>
+          <div class="row gap"><button class="btn" id="s-save">Save</button></div>
+          <p class="muted small">Tokens are written to <code>config.json</code> on your machine. Git-ignored, never sent anywhere but Meta and LinkedIn.</p>
+          <div class="fgroup"><label>Image host endpoint <span class="muted">(optional — makes Instagram auto-post zero-click)</span></label><input id="s-host" placeholder="https://…/upload"></div>
+        </section>
+        <section>
+          <h2>Cadence</h2>
+          <p class="muted small">5 posts a week, every week, for 12 weeks. Consistency beats brilliance — the algorithm punishes absence far harder than it rewards quality.</p>
+          <div class="fgroup"><label>Posts per week</label><input id="s-perweek" type="number" min="1" max="14" value="5"></div>
+          <div class="fgroup"><label>Preferred post time</label><input id="s-time" type="time" value="08:15"></div>
+          <div class="fgroup"><label>Pillar mix <span class="muted">(more weight = more of that pillar)</span></label><div id="s-mix" class="mix"></div></div>
+          <button class="btn" id="s-resched">Rebuild the 90-day schedule</button>
+
+          <h2 class="mt">Export</h2>
+          <p class="muted small">Column names Buffer, Later, Metricool and Hootsuite all read these directly.</p>
+          <div class="row gap wrap">
+            <button class="btn ghost sm" data-csv="buffer">Buffer / Later</button>
+            <button class="btn ghost sm" data-csv="metricool">Metricool</button>
+            <button class="btn ghost sm" data-csv="hootsuite">Hootsuite</button>
+            <button class="btn ghost sm" data-csv="full">Full library + prompts</button>
+          </div>
+
+          <h2 class="mt">Backup</h2>
+          <div class="row gap">
+            <button class="btn ghost sm" id="s-backup">Download</button>
+            <button class="btn ghost sm" id="s-restore">Restore</button>
+            <input type="file" id="s-file" accept="application/json" hidden>
+          </div>
+          <div class="result" id="s-result"></div>
+        </section>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script src="app.js"></script>
+</body>
+</html>

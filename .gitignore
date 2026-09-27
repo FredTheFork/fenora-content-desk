@@ -1,0 +1,26 @@
+# Secrets & credentials — never commit
+config.json
+*.token
+
+# Your actual schedule and local state
+content/schedule.json
+.DS_Store
+
+# Dependencies / build output
+node_modules/
+__pycache__/
+*.pyc
+
+# Rendered PNGs are ~250MB and reproducible in ~10 minutes:
+#   cd render && python3 render.py
+# Uncomment the next line if you'd rather commit them.
+render/out/
+
+# AI-generated hero photos (regenerate or replace freely)
+assets/ai/*.png
+
+# Editor / OS
+.vscode/
+.idea/
+Thumbs.db
+*.swp
