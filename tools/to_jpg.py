@@ -1,7 +1,7 @@
 import os, sys
 from concurrent.futures import ProcessPoolExecutor
 from PIL import Image
-SRC='render/out'; DST='render/jpg'
+SRC='render/png'; DST='render/jpg'
 def conv(f):
     o=os.path.join(DST,f[:-4]+'.jpg')
     if os.path.exists(o): return 0

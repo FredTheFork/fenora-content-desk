@@ -213,7 +213,7 @@ async function api(req, res, pathname) {
   if (pathname === '/api/images') {
     const list = (dir, ext) => { try { return fs.readdirSync(dir).filter(f => f.endsWith(ext)); } catch { return []; } };
     return json(res, 200, {
-      files: list(path.join(ROOT, 'render', 'out'), '.png'),   // print masters
+      files: list(path.join(ROOT, 'render', 'png'), '.png'),   // print masters
       jpgs:  list(path.join(ROOT, 'render', 'jpg'), '.jpg'),   // upload-ready
     });
   }

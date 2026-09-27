@@ -41,8 +41,8 @@ echo "Zipping…"
 rm -f fenora-images.zip
 (cd render && zip -q -r ../fenora-images.zip jpg)
 echo
-echo "✅ $(ls render/out/*.png | wc -l) PNGs  ·  $(ls render/jpg/*.jpg | wc -l) JPEGs"
-echo "   render/out/          print-quality masters"
+echo "✅ $(ls render/png/*.png | wc -l) PNGs  ·  $(ls render/jpg/*.jpg | wc -l) JPEGs"
+echo "   render/png/          print-quality masters"
 echo "   render/jpg/          upload-ready (22 MB total)"
 echo "   fenora-images.zip    the whole set, zipped"
 echo

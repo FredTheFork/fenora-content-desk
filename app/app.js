@@ -31,18 +31,18 @@ const copy = async (txt,msg) => { try { await navigator.clipboard.writeText(txt)
   catch { const a=document.createElement('textarea'); a.value=txt; document.body.appendChild(a);
     a.select(); document.execCommand('copy'); a.remove(); toast(msg||'Copied','ok'); } };
 
-/* Image files produced by render/render.py → served at /render/out/
+/* Image files produced by render/render.py → served at /render/png/
    tools/to_jpg.py also writes a matching set into /render/jpg/. We prefer the
    JPEG when it exists (5× lighter for the browser) and fall back to the PNG. */
 const imgURL = (id,size) => {
   const s = size || '4x5';
   const j = `${id}_${s}.jpg`, p = `${id}_${s}.png`;
   if (S.jpgs.has(j)) return `../render/jpg/${j}`;
-  return S.images.has(p) ? `../render/out/${p}` : null;
+  return S.images.has(p) ? `../render/png/${p}` : null;
 };
 const dlURL = (id,size) => { const s = size || '4x5';
   return S.jpgs.has(`${id}_${s}.jpg`) ? `../render/jpg/${id}_${s}.jpg`
-       : S.images.has(`${id}_${s}.png`) ? `../render/out/${id}_${s}.png` : null; };
+       : S.images.has(`${id}_${s}.png`) ? `../render/png/${id}_${s}.png` : null; };
 const aspectOf = p => p.format === 'reel' || p.format === 'story' ? '9x16' : '4x5';
 
 /* ══════════════ CAPTION ENGINE ══════════════ */

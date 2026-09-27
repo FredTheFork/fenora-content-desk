@@ -14,7 +14,7 @@ __pycache__/
 # Rendered images are ~140MB and reproducible in ~10 minutes:
 #   cd render && python3 render.py && python3 tools/to_jpg.py
 # Uncomment the next lines if you'd rather commit them.
-render/out/
+render/png/
 render/jpg/
 
 # Download bundles, produced by build.sh

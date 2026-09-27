@@ -22,7 +22,7 @@ from PIL import Image, ImageDraw, ImageFont, ImageFilter, ImageEnhance
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
-OUT = os.path.join(HERE, "out")
+OUT = os.path.join(HERE, "png")
 AI = os.path.join(ROOT, "assets", "ai")
 FONT = os.path.join(ROOT, "assets", "fonts", "MontserratVar.ttf")
 SS = 2  # supersample factor

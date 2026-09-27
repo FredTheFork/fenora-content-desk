@@ -122,7 +122,7 @@ vertical formats also get **9:16** (Stories / Reels cover) — 283 files in all.
 `tools/to_jpg.py` then writes a matching JPEG set into `render/jpg/` at
 quality 92 with 4:4:4 chroma. The dashboard and the zip bundle both prefer
 those, which takes the set from 116 MB to 22 MB with no visible loss on text.
-Use `render/out/` when you want the print masters.
+Use `render/png/` when you want the print masters.
 
 Requires Pillow. Montserrat (variable) is vendored in `assets/fonts/`.
 
