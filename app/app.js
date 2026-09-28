@@ -5,8 +5,10 @@
  * the Calendar, Library and Settings exist to prepare it.
  *
  * State lives in the browser (localStorage) and is mirrored to
- * content/schedule.json when the local server is running. On Vercel the
- * browser copy is authoritative — use Settings → Backup to move it.
+ * content/schedule.json when the local server is running. Boot reads it
+ * back through /api/load — an endpoint that exists both locally and on
+ * Vercel — so the request never 404s. On Vercel the browser copy is
+ * authoritative — use Settings → Backup to move it.
  */
 (() => {
 'use strict';
@@ -49,7 +51,6 @@ const downloadFile = (url, name) => {
 /* ══════════════ state ══════════════ */
 const LS     = 'fenora.desk.v2';      // the schedule
 const LSET   = 'fenora.settings.v1';  // cadence + pillar mix
-const LSEEN  = 'fenora.onboarded';    // welcome screen shown?
 
 const DEFAULT_SETTINGS = {
   times: ['08:00', '18:30'],
@@ -176,7 +177,7 @@ function publicImgURL(id, size) {
     return;
   }
   try {
-    const r = await fetch('/content/schedule.json');
+    const r = await fetch('/api/load');
     if (r.ok) S.sched = (await r.json()).posts || {};
   } catch {}
   try { S.sched = { ...S.sched, ...JSON.parse(localStorage.getItem(LS) || '{}') }; } catch {}
@@ -195,12 +196,6 @@ function publicImgURL(id, size) {
   renderMix();
   loadCfg();
   renderAll();
-
-  if (!localStorage.getItem(LSEEN)) {
-    const anyPlanned = S.posts.some(p => sched(p.id).date);
-    $('#w-go').textContent = anyPlanned ? 'Let’s go' : 'Plan my first week →';
-    $('#welcome').hidden = false;
-  }
 })();
 
 function renderAll() { renderToday(); drawCal(); renderLib(); }
@@ -946,15 +941,6 @@ $('#eng-plus').onclick = () => {
   if (v === 8) toast('Eight comments. That’s the routine done 🎉', 'ok');
 };
 $('#eng-reset').onclick = () => { localStorage.removeItem(engKey); $('#eng-count').textContent = 0; };
-
-/* ══════════════ WELCOME ══════════════ */
-$('#w-go').onclick = () => {
-  $('#welcome').hidden = true;
-  localStorage.setItem(LSEEN, '1');
-  const anyPlanned = S.posts.some(p => sched(p.id).date);
-  if (!anyPlanned) planAndReport(7);
-  else renderAll();
-};
 
 /* ══════════════ keyboard ══════════════ */
 document.addEventListener('keydown', e => {

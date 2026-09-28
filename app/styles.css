@@ -8,6 +8,11 @@
   --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
 }
 *{box-sizing:border-box;margin:0;padding:0}
+/* The UA rule that honours the hidden attribute is author-overridable:
+   any class that sets display (display:flex on .lightbox, .img-empty …)
+   was beating it, so those elements could never actually hide. Belt and
+   braces: hidden always wins. */
+[hidden]{display:none!important}
 html{-webkit-text-size-adjust:100%}
 body{
   background:var(--bg);color:var(--tx);
@@ -290,31 +295,8 @@ details.adv .fgroup{margin-top:14px}
   padding:13px 15px;font-size:12.5px;color:var(--tx2);line-height:1.6;
 }
 
-/* ── WELCOME ── */
-.welcome{position:fixed;inset:0;z-index:150;display:flex;align-items:center;justify-content:center;padding:20px;
-  background:rgba(6,8,11,.82);backdrop-filter:blur(6px)}
-.w-card{
-  background:var(--bg2);border:1px solid var(--line);border-radius:18px;box-shadow:var(--sh);
-  padding:38px;max-width:520px;width:100%;animation:pop .3s ease;
-}
-@keyframes pop{from{transform:scale(.95);opacity:0}to{transform:none;opacity:1}}
-.w-card .logo{width:52px;height:52px;border-radius:13px;margin-bottom:16px}
-.w-card h1{font-size:24px;margin-bottom:16px}
-.w-steps{list-style:none;counter-reset:s;margin:0 0 18px}
-.w-steps li{
-  counter-increment:s;position:relative;padding:11px 0 11px 44px;color:var(--tx2);
-  font-size:14px;line-height:1.55;border-bottom:1px solid var(--line);
-}
-.w-steps li:last-child{border-bottom:0}
-.w-steps li::before{
-  content:counter(s);position:absolute;left:0;top:11px;width:28px;height:28px;border-radius:50%;
-  background:var(--acc-soft);color:var(--acc2);font-weight:700;font-size:13px;
-  display:flex;align-items:center;justify-content:center;
-}
-.w-steps b{color:var(--tx)}
-.w-note{color:var(--tx2);font-size:13px;margin-bottom:22px;line-height:1.6}
-
 /* ── LIGHTBOX ── */
+@keyframes pop{from{transform:scale(.95);opacity:0}to{transform:none;opacity:1}}
 .lightbox{position:fixed;inset:0;z-index:160;display:flex;align-items:center;justify-content:center;padding:24px}
 .lightbox img{max-width:100%;max-height:100%;border-radius:12px;box-shadow:var(--sh);animation:pop .22s ease}
 
