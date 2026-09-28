@@ -6,7 +6,15 @@
   ],
   "headers": [
     {
-      "source": "/(app|content|assets)/(.*\\.(js|css|json))",
+      "source": "/(app|content|assets)/(.*)\\.js",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=300, must-revalidate" }]
+    },
+    {
+      "source": "/(app|content|assets)/(.*)\\.css",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=300, must-revalidate" }]
+    },
+    {
+      "source": "/(app|content|assets)/(.*)\\.json",
       "headers": [{ "key": "Cache-Control", "value": "public, max-age=300, must-revalidate" }]
     },
     {
