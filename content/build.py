@@ -151,6 +151,8 @@ for p in POSTS:
         "hook": p["hook"],
         "body": p["body"],
         "cta": p.get("cta", ""),
+        "cta_fb": p.get("cta_fb", "") or p.get("cta", ""),
+        "li_lead": p.get("li_lead", ""),
         "image_prompt": full_prompt(p),
         "image_style": p["style"],
         "aspect": p.get("img", "4:5"),

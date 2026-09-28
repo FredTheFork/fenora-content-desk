@@ -4,24 +4,27 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Fenora Content Desk</title>
-<link rel="stylesheet" href="styles.css">
+<meta name="theme-color" content="#101216">
+<meta name="description" content="This is the content. Click to post.">
+<link rel="stylesheet" href="/app/styles.css">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%231a1d21'/><path d='M16 6a10 8 0 0 1 10 8v12H6V14A8 8 0 0 1 16 6z' fill='none' stroke='%23f26b21' stroke-width='2'/><path d='M16 7v19M7 15h18' stroke='%23f26b21' stroke-width='1.6'/></svg>">
 </head>
 <body>
 
 <header class="top">
-  <a class="brand" href="#" data-go="today">
+  <a class="brand" href="/" id="brand">
     <svg viewBox="0 0 32 32" class="logo"><rect width="32" height="32" rx="7" fill="#1a1d21"/><path d="M16 6a10 8 0 0 1 10 8v12H6V14A8 8 0 0 1 16 6z" fill="none" stroke="#f26b21" stroke-width="2"/><path d="M16 7v19M7 15h18" stroke="#f26b21" stroke-width="1.6"/></svg>
     <span>Fenora <b>Content Desk</b></span>
   </a>
   <nav class="tabs" id="tabs">
     <button data-tab="today" class="on">Today</button>
-    <button data-tab="library">Library</button>
     <button data-tab="calendar">Calendar</button>
-    <button data-tab="engage">Engage</button>
+    <button data-tab="library">Library</button>
+    <button data-tab="grow">Grow</button>
   </nav>
   <div class="top-actions">
-    <button class="icon-btn" id="btn-setup" title="Setup">⚙</button>
+    <span id="save-state"></span>
+    <button class="icon-btn" id="btn-setup" title="Settings" aria-label="Settings">⚙</button>
   </div>
 </header>
 
@@ -29,7 +32,32 @@
 
 <!-- ════════════════════ TODAY ════════════════════ -->
 <section class="tab on" id="tab-today">
-  <div class="today-wrap" id="today"></div>
+  <div class="today-head">
+    <div>
+      <h1 id="t-date">…</h1>
+      <p class="lede" id="t-sum"></p>
+    </div>
+    <div class="grow"></div>
+    <button class="btn ghost" id="t-plan">⚡ Plan this week</button>
+  </div>
+  <div class="daystrip" id="t-strip"></div>
+  <div id="t-posts"></div>
+</section>
+
+<!-- ════════════════════ CALENDAR ════════════════════ -->
+<section class="tab" id="tab-calendar">
+  <div class="cal-head">
+    <button class="icon-btn" id="cal-prev" aria-label="Previous month">←</button>
+    <h2 id="cal-title">—</h2>
+    <button class="icon-btn" id="cal-next" aria-label="Next month">→</button>
+    <div class="grow"></div>
+    <button class="btn ghost sm" id="cal-week">⚡ Plan this week</button>
+    <button class="btn ghost sm" id="cal-30">Plan 30 days</button>
+    <button class="btn ghost sm" id="cal-90">Plan 90 days</button>
+  </div>
+  <div class="cal-dow" id="cal-dow"></div>
+  <div class="cal-grid" id="cal-grid"></div>
+  <p class="cal-foot">Click an empty day to fill it. Drag any card from the <b>Library</b> onto a date to schedule it. Click a post to open it.</p>
 </section>
 
 <!-- ════════════════════ LIBRARY ════════════════════ -->
@@ -51,22 +79,8 @@
   <div class="lib" id="lib"></div>
 </section>
 
-<!-- ════════════════════ CALENDAR ════════════════════ -->
-<section class="tab" id="tab-calendar">
-  <div class="cal-head">
-    <button class="btn ghost sm" id="cal-prev">←</button>
-    <h2 id="cal-title">—</h2>
-    <button class="btn ghost sm" id="cal-next">→</button>
-    <div class="grow"></div>
-    <button class="btn sm" id="btn-autofill2">⚡ Fill 90 days</button>
-  </div>
-  <div class="cal-dow" id="cal-dow"></div>
-  <div class="cal-grid" id="cal-grid"></div>
-  <p class="cal-foot">Drag any card from the <b>Library</b> onto a date to schedule it. Click a scheduled post to open it. Click an empty day to fill it automatically.</p>
-</section>
-
-<!-- ════════════════════ ENGAGE ════════════════════ -->
-<section class="tab" id="tab-engage">
+<!-- ════════════════════ GROW ════════════════════ -->
+<section class="tab" id="tab-grow">
   <div class="engage-grid">
     <div class="panel">
       <h2>The 20-minute daily routine</h2>
@@ -100,7 +114,7 @@
       </ul>
       <h3 class="mt">The whole plan</h3>
       <div class="budget">
-        <div><b>5×</b><span>posts / week</span></div>
+        <div><b>2×/day</b><span>posts</span></div>
         <div><b>7×</b><span>stories / week</span></div>
         <div><b>20m</b><span>comments / day</span></div>
         <div><b>0</b><span>pitches ever</span></div>
@@ -116,19 +130,20 @@
   <div class="drawer-scrim" data-close></div>
   <div class="drawer-panel">
     <header class="drawer-head">
-      <span class="mono" id="c-id">—</span>
+      <span class="mono pill id" id="c-id">—</span>
       <span class="pill" id="c-pillar">—</span>
       <span class="pill" id="c-format">—</span>
       <div class="grow"></div>
-      <button class="icon-btn" data-close>✕</button>
+      <button class="icon-btn" data-close aria-label="Close">✕</button>
     </header>
     <div class="drawer-body">
       <div class="col-img">
         <img id="c-image" alt="">
+        <div class="img-empty" id="c-img-empty" hidden>No image rendered yet</div>
         <div class="img-bar">
-          <select id="c-size" class="mini"><option value="4x5">4:5 feed</option><option value="9x16">9:16 reel</option><option value="1x1">1:1</option></select>
-          <a class="btn ghost sm" id="c-dl" download>Download PNG</a>
-          <a class="btn ghost sm" id="c-open" target="_blank">Open full size</a>
+          <select id="c-size" class="mini"><option value="4x5">4:5 feed</option><option value="9x16">9:16 reel</option></select>
+          <a class="btn ghost sm" id="c-dl" download>Download</a>
+          <a class="btn ghost sm" id="c-open" target="_blank" rel="noopener">Open full size</a>
         </div>
         <div class="fgroup"><label>Schedule</label>
           <div class="row gap">
@@ -137,24 +152,31 @@
           </div>
         </div>
         <div class="fgroup"><label>Post to</label><div class="chips" id="c-platforms"></div></div>
-        <div class="fgroup"><label>Image generator prompt <span class="muted">(if you'd rather generate your own)</span></label>
-          <textarea id="c-prompt" rows="4" class="mono small"></textarea>
-          <button class="btn ghost sm" id="c-copy-prompt">Copy prompt</button>
-        </div>
+        <details class="adv">
+          <summary>Advanced</summary>
+          <div class="fgroup"><label>Image generator prompt <span class="muted">(if you'd rather generate your own)</span></label>
+            <textarea id="c-prompt" rows="4" class="mono small"></textarea>
+            <button class="btn ghost sm" id="c-copy-prompt">Copy prompt</button>
+          </div>
+          <div class="fgroup"><label>Public image URL <span class="muted">(only needed for auto-posting to Instagram)</span></label>
+            <input id="c-imgurl" type="url" placeholder="https://…">
+          </div>
+        </details>
       </div>
       <div class="col-txt">
         <div class="fgroup"><label>Hook <span class="muted">— the big text on the image</span></label>
           <textarea id="c-hook" rows="2"></textarea></div>
         <div class="fgroup"><label>Caption</label><textarea id="c-body" rows="10"></textarea></div>
-        <div class="fgroup"><label>LinkedIn lead <span class="muted">(optional, overrides the hook there)</span></label>
+        <div class="fgroup"><label>CTA <span class="muted">(optional closing line)</span></label>
+          <textarea id="c-cta" rows="2"></textarea></div>
+        <div class="fgroup"><label>LinkedIn lead <span class="muted">(optional — overrides the opening line there)</span></label>
           <textarea id="c-lilead" rows="2"></textarea></div>
-        <div class="fgroup"><label>Public image URL <span class="muted">(only needed to auto-post to Instagram)</span></label>
-          <input id="c-imgurl" type="url" placeholder="https://…"></div>
+        <p class="muted small">Editing the post rebuilds all three captions below. Type in a caption to override just that one.</p>
         <div class="cap-tabs" id="cap-tabs"></div>
         <textarea id="cap" rows="12"></textarea>
         <div class="cap-bar">
           <button class="btn sm" id="cap-copy">Copy caption</button>
-          <button class="btn ghost sm" id="cap-reset">Reset</button>
+          <button class="btn ghost sm" id="cap-reset">Reset to auto</button>
           <div class="grow"></div>
           <span class="muted small" id="cap-count"></span>
         </div>
@@ -163,34 +185,28 @@
   </div>
 </div>
 
-<!-- ════════════════════ SETUP (drawer) ════════════════════ -->
+<!-- ════════════════════ SETTINGS (drawer) ════════════════════ -->
 <div class="drawer" id="setup" hidden>
   <div class="drawer-scrim" data-setup-close></div>
   <div class="drawer-panel wide">
-    <header class="drawer-head"><b>Setup</b><div class="grow"></div><button class="icon-btn" data-setup-close>✕</button></header>
+    <header class="drawer-head"><b>Settings</b><div class="grow"></div><button class="icon-btn" data-setup-close aria-label="Close">✕</button></header>
     <div class="drawer-body single">
       <div class="setup-grid">
         <section>
-          <h2>Posting to</h2>
-          <div id="conn-status" class="conn"></div>
-          <p class="muted small">Without these, everything still works in <b>copy mode</b> — one click puts the right caption on your clipboard.</p>
-          <div class="fgroup"><label>Instagram Business account ID</label><input id="s-iguser" placeholder="1784140…"></div>
-          <div class="fgroup"><label>Meta access token <span class="muted">(instagram_content_publish + pages_manage_posts)</span></label><input id="s-mtoken" type="password" placeholder="EAAG…"></div>
-          <div class="fgroup"><label>Facebook Page ID</label><input id="s-pageid" placeholder="10223…"></div>
-          <div class="fgroup"><label>Facebook Page token</label><input id="s-ptoken" type="password" placeholder="EAAG…"></div>
-          <div class="fgroup"><label>LinkedIn organisation URN</label><input id="s-orgurn" placeholder="urn:li:organization:…"></div>
-          <div class="fgroup"><label>LinkedIn access token <span class="muted">(w_organization_social)</span></label><input id="s-litoken" type="password" placeholder="AQV…"></div>
-          <div class="row gap"><button class="btn" id="s-save">Save</button></div>
-          <p class="muted small">Tokens are written to <code>config.json</code> on your machine. Git-ignored, never sent anywhere but Meta and LinkedIn.</p>
-          <div class="fgroup"><label>Image host endpoint <span class="muted">(optional — makes Instagram auto-post zero-click)</span></label><input id="s-host" placeholder="https://…/upload"></div>
-        </section>
-        <section>
-          <h2>Cadence</h2>
-          <p class="muted small">5 posts a week, every week, for 12 weeks. Consistency beats brilliance — the algorithm punishes absence far harder than it rewards quality.</p>
-          <div class="fgroup"><label>Posts per week</label><input id="s-perweek" type="number" min="1" max="14" value="5"></div>
-          <div class="fgroup"><label>Preferred post time</label><input id="s-time" type="time" value="08:15"></div>
-          <div class="fgroup"><label>Pillar mix <span class="muted">(more weight = more of that pillar)</span></label><div id="s-mix" class="mix"></div></div>
-          <button class="btn" id="s-resched">Rebuild the 90-day schedule</button>
+          <h2>How many posts a day</h2>
+          <p class="muted small">One post per time. Default is two a day, every day — morning and evening.</p>
+          <div id="s-times"></div>
+          <button class="btn ghost sm" id="s-add-time">+ Add another time</button>
+
+          <h2 class="mt">Pillar mix</h2>
+          <p class="muted small">More weight = more of that kind of post when planning.</p>
+          <div id="s-mix" class="mix"></div>
+
+          <h2 class="mt">Schedule</h2>
+          <div class="row gap wrap">
+            <button class="btn" id="s-resched">Rebuild the whole schedule</button>
+          </div>
+          <p class="muted small" style="margin-top:8px">Clears every planned post (never touches posted ones) and re-plans the next 90 days.</p>
 
           <h2 class="mt">Export</h2>
           <p class="muted small">Column names Buffer, Later, Metricool and Hootsuite all read these directly.</p>
@@ -202,6 +218,7 @@
           </div>
 
           <h2 class="mt">Backup</h2>
+          <p class="muted small">Your schedule lives in this browser. Download a backup now and then.</p>
           <div class="row gap">
             <button class="btn ghost sm" id="s-backup">Download</button>
             <button class="btn ghost sm" id="s-restore">Restore</button>
@@ -209,12 +226,60 @@
           </div>
           <div class="result" id="s-result"></div>
         </section>
+        <section>
+          <h2>Posting to</h2>
+          <div id="conn-status" class="conn"></div>
+          <div id="conn-form">
+            <p class="muted small">Without these, everything still works in <b>copy mode</b> — one click puts the right caption on your clipboard and the image in your downloads.</p>
+            <div class="fgroup"><label>Instagram Business account ID</label><input id="s-iguser" placeholder="1784140…" autocomplete="off"></div>
+            <div class="fgroup"><label>Meta access token <span class="muted">(instagram_content_publish + pages_manage_posts)</span></label><input id="s-mtoken" type="password" placeholder="EAAG…" autocomplete="off"></div>
+            <div class="fgroup"><label>Facebook Page ID</label><input id="s-pageid" placeholder="10223…" autocomplete="off"></div>
+            <div class="fgroup"><label>Facebook Page token</label><input id="s-ptoken" type="password" placeholder="EAAG…" autocomplete="off"></div>
+            <div class="fgroup"><label>LinkedIn organisation URN</label><input id="s-orgurn" placeholder="urn:li:organization:…" autocomplete="off"></div>
+            <div class="fgroup"><label>LinkedIn access token <span class="muted">(w_organization_social)</span></label><input id="s-litoken" type="password" placeholder="AQV…" autocomplete="off"></div>
+            <div class="row gap"><button class="btn" id="s-save">Save</button></div>
+            <p class="muted small">Tokens are written to <code>config.json</code> on your machine. Git-ignored, never sent anywhere but Meta and LinkedIn.</p>
+            <div class="fgroup" style="margin-top:14px"><label>Image host endpoint <span class="muted">(optional — for Instagram auto-post from a laptop)</span></label><input id="s-host" placeholder="https://…/upload"></div>
+          </div>
+          <div id="conn-env" class="notice" hidden>
+            <b>Running on Vercel.</b> Tokens live in your project's
+            <b>Environment Variables</b>, not in the browser:
+            <div class="mono small" style="margin-top:10px;line-height:2">
+              META_TOKEN · FB_PAGE_ID · FB_PAGE_TOKEN<br>
+              IG_USER_ID · LI_ORG_URN · LI_TOKEN<br>
+              META_GRAPH_VERSION · IMAGE_HOST_ENDPOINT
+            </div>
+            <p class="muted small" style="margin-top:10px">Once set, <b>Post now</b> appears next to every caption. Until then, copy mode works perfectly.</p>
+          </div>
+        </section>
       </div>
     </div>
   </div>
 </div>
 
+<!-- ════════════════════ WELCOME (first run) ════════════════════ -->
+<div class="welcome" id="welcome" hidden>
+  <div class="w-card">
+    <svg viewBox="0 0 32 32" class="logo"><rect width="32" height="32" rx="7" fill="#1a1d21"/><path d="M16 6a10 8 0 0 1 10 8v12H6V14A8 8 0 0 1 16 6z" fill="none" stroke="#f26b21" stroke-width="2"/><path d="M16 7v19M7 15h18" stroke="#f26b21" stroke-width="1.6"/></svg>
+    <h1>This is the content.<br>Click to post.</h1>
+    <ol class="w-steps">
+      <li><b>Every day, open this page.</b> The posts for the day are already here — picture and words ready to go.</li>
+      <li><b>For each platform, click the button.</b> The caption copies itself and the picture downloads. Paste it into the app and post it.</li>
+      <li><b>Tick Posted.</b> That's it. Green means done.</li>
+    </ol>
+    <p class="w-note">Once a week, press <b>⚡ Plan this week</b> and the next seven days are ready. Everything is saved automatically.</p>
+    <button class="btn big" id="w-go">Plan my first week →</button>
+  </div>
+</div>
+
+<!-- ════════════════════ LIGHTBOX ════════════════════ -->
+<div class="lightbox" id="lightbox" hidden>
+  <div class="drawer-scrim" data-lb-close></div>
+  <img id="lb-img" alt="">
+</div>
+
 <div class="toast" id="toast"></div>
-<script src="app.js"></script>
+<script src="/app/captions.js"></script>
+<script src="/app/app.js"></script>
 </body>
 </html>

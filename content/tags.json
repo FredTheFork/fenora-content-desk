@@ -1,0 +1,110 @@
+{
+ "tagsets": {
+  "core": [
+   "windowfittersofinstagram",
+   "windowinstallation",
+   "doubleglazing",
+   "fenorapro"
+  ],
+  "pain": [
+   "fitterslife",
+   "tradeslife",
+   "windowfittersofinstagram",
+   "uktrades",
+   "fenorapro"
+  ],
+  "nerd": [
+   "windownerd",
+   "sashwindows",
+   "conservation",
+   "windowdetailing",
+   "fenorapro"
+  ],
+  "customers": [
+   "homeownerlife",
+   "homeimprovement",
+   "renovationuk",
+   "ukhomeowner",
+   "fenorapro"
+  ],
+  "planning": [
+   "planningpermission",
+   "planningapplication",
+   "conservationarea",
+   "listedbuilding",
+   "fenorapro"
+  ],
+  "money": [
+   "smallbusiness",
+   "tradesbusiness",
+   "margin",
+   "quoting",
+   "fenorapro"
+  ],
+  "contrarian": [
+   "tradesindustry",
+   "unpopularopinion",
+   "buildintrade",
+   "tradesuk",
+   "fenorapro"
+  ],
+  "wip": [
+   "buildinpublic",
+   "saasbuild",
+   "logistics",
+   "behindthescenes",
+   "fenorapro"
+  ],
+  "build": [
+   "buildinpublic",
+   "indiehacker",
+   "saasfounder",
+   "startuplife",
+   "fenorapro"
+  ],
+  "team": [
+   "teambuilding",
+   "tradespeople",
+   "apprentice",
+   "teamwork",
+   "fenorapro"
+  ],
+  "oneliners": [
+   "tradeslife",
+   "fitterslife",
+   "uktrades",
+   "funnytrades",
+   "fenorapro"
+  ]
+ },
+ "discovery": [
+  "tradeslife",
+  "tradesmen",
+  "builderlife",
+  "skilledtrades",
+  "bluecollar",
+  "constructionuk",
+  "renovation",
+  "homeimprovement",
+  "diy",
+  "makestrends",
+  "fenestration",
+  "glazing",
+  "joinery",
+  "doubleglazing",
+  "windows",
+  "fyp",
+  "reels",
+  "viral",
+  "trending",
+  "explore",
+  "reelsinstagram"
+ ],
+ "styles": {
+  "photo-real": "Photorealistic editorial photograph, UK domestic architecture, soft overcast British daylight, shot on 35mm, shallow depth of field, muted natural palette of slate grey, birch plywood, anthracite and warm oak. Documentary realism, not glossy advertising. Absolutely no text, no captions, no logos, no watermarks, no UI overlays.",
+  "photo-trades": "Photorealistic candid documentary photograph of a UK tradesperson at work, hi-vis and worn workwear, tools and laser measure in frame, overcast British daylight, van or scaffold hinted in background, slightly chaotic and real, not staged. Muted natural palette, 35mm, shallow depth of field. Absolutely no text, no captions, no logos, no watermarks, no UI overlays.",
+  "illustration": "Bold flat vector editorial illustration in the style of a British broadsheet newspaper cartoon, heavy confident linework, flat colour blocking, limited palette of ink navy, mustard, brick red, warm off-white and anthracite. Slight paper grain texture. Single clear focal gag, simple background. Absolutely no text, no speech bubbles, no letters, no logos, no watermarks.",
+  "screen-mock": "Clean product photograph of a modern desktop software interface floating at a slight angle, dark charcoal UI with orange accent, crisp data tables and technical window drawings, soft neutral studio background with realistic reflections and shadow. Abstract unreadable micro-text only. No legible words, no logos, no watermarks.",
+  "textcard": "Full-bleed typographic poster background, deep anthracite charcoal with subtle warm grain texture and a faint technical line drawing of a window elevation in the lower third at 6% opacity. Empty centre space reserved for overlaid text. Absolutely no text, no letters, no logos, no watermarks."
+ }
+}

@@ -11,11 +11,11 @@ node_modules/
 __pycache__/
 *.pyc
 
-# Rendered images are ~140MB and reproducible in ~10 minutes:
+# PNG masters are ~116MB and reproducible in ~10 minutes:
 #   cd render && python3 render.py && python3 tools/to_jpg.py
-# Uncomment the next lines if you'd rather commit them.
+# The JPEG set (render/jpg + render/images.json) IS committed so the Vercel
+# deployment has every image ready to post.
 render/png/
-render/jpg/
 
 # Download bundles, produced by build.sh
 fenora-images.zip
