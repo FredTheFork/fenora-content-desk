@@ -74,7 +74,13 @@ const S = {
   sched: {},
   settings: JSON.parse(JSON.stringify(DEFAULT_SETTINGS)),
   cfg: { configured: {}, defaults: {}, persistent: true },
-  filters: { q:'', pillar:'', format:'', status:'' },
+  filters: { q:'', pillar:'', format:'', status:'', series:'' },
+  vaultTab: 'banter',
+  stratTab: 'positioning',
+  banterIdx: 0,
+  carouselSlide: 0,
+  carouselPostId: 'CAR-01',
+  composerMode: 'raw',
   day: 0,                    // selected index in the 7-day strip
   calY: today().getFullYear(), calM: today().getMonth(),
 };
@@ -203,8 +209,18 @@ function captionFor(p, s, plat) {
   $('#f-format').innerHTML = '<option value="">All formats</option>' +
     Object.entries(PFMT).map(([k,v]) => `<option value="${k}">${v}</option>`).join('');
 
+  const seriesSet = [...new Set(S.posts.map(p => p.series).filter(Boolean))].sort();
+  const fSeries = $('#f-series');
+  if (fSeries) {
+    fSeries.innerHTML = '<option value="">All series</option>' +
+      seriesSet.map(s => `<option value="${esc(s)}">${esc(s)}</option>`).join('');
+    fSeries.onchange = e => { S.filters.series = e.target.value; renderLib(); };
+  }
+
   renderMix();
   loadCfg();
+  initVaultEvents();
+  initStrategyEvents();
   renderAll();
 })();
 
@@ -212,7 +228,7 @@ function readLS(key, fallback) {
   try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; }
 }
 
-function renderAll() { renderToday(); drawCal(); renderLib(); }
+function renderAll() { renderToday(); drawCal(); renderLib(); renderVault(); renderStrategy(); }
 
 /* ══════════════ tabs ══════════════ */
 function tab(n) {
@@ -222,6 +238,8 @@ function tab(n) {
   if (n === 'today') renderToday();
   if (n === 'library') renderLib();
   if (n === 'calendar') drawCal();
+  if (n === 'vault') renderVault();
+  if (n === 'strategy') renderStrategy();
 }
 $('#tabs').onclick = e => { const b = e.target.closest('button'); if (b) tab(b.dataset.tab); };
 $('#brand').onclick = e => { e.preventDefault(); tab('today'); };
@@ -553,10 +571,11 @@ $('#lib-newpost').onclick = () => newPost();
 function renderLib() {
   const f = S.filters, q = f.q.toLowerCase();
   const list = S.posts.filter(p => {
+    if (f.series && (p.series || '') !== f.series) return false;
     if (f.pillar && p.pillar !== f.pillar) return false;
     if (f.format && p.format !== f.format) return false;
     if (f.status && stOf(p) !== f.status) return false;
-    if (q && !(field(p, sched(p.id), 'hook') + ' ' + field(p, sched(p.id), 'body') + ' ' + p.id).toLowerCase().includes(q)) return false;
+    if (q && !(field(p, sched(p.id), 'hook') + ' ' + field(p, sched(p.id), 'body') + ' ' + (p.series || '') + ' ' + p.id).toLowerCase().includes(q)) return false;
     return true;
   });
   $('#lib-count').textContent = S.posts.length
@@ -567,7 +586,11 @@ function renderLib() {
     const hook = field(p, s, 'hook');
     return `<article class="pcard" data-id="${p.id}" draggable="true" tabindex="0">
       <div class="thumb">
-        <div class="th-top"><span class="pill id">${esc(p.id)}</span>${isCustom(p.id) ? '<span class="pill mine">yours</span>' : ''}</div>
+        <div class="th-top">
+          <span class="pill id">${esc(p.id)}</span>
+          ${p.series ? `<span class="pill" style="background:#222;color:#5b9cff;border-color:#333">${esc(p.series)}</span>` : ''}
+          ${isCustom(p.id) ? '<span class="pill mine">yours</span>' : ''}
+        </div>
         <div class="ph">${esc(hook) || '<span class="muted">Untitled post</span>'}</div>
       </div>
       <div class="foot">
@@ -771,6 +794,93 @@ function showCap() {
   const p = find(CUR); if (!p) return;
   $('#cap').value = captionFor(p, sched(CUR), capPlat);
   capMeta();
+  if (S.composerMode === 'mock') renderMockPreview();
+}
+
+function renderMockPreview() {
+  const p = find(CUR); if (!p) return;
+  const s = sched(CUR);
+  const text = captionFor(p, s, capPlat);
+  const container = $('#cap-mock');
+  if (!container) return;
+
+  if (capPlat === 'IG') {
+    container.innerHTML = `
+      <div class="social-mock-header">
+        <div class="mock-avatar">🪟</div>
+        <div class="mock-meta">
+          <b>fenora.pro <span style="color:#5b9cff">✓</span></b>
+          <span>Audio original • Double Glazing Trade</span>
+        </div>
+        <div class="grow"></div>
+        <span style="color:#666">•••</span>
+      </div>
+      <div style="background:#111;border:1px dashed #333;border-radius:8px;padding:20px 14px;text-align:center;margin-bottom:12px;font-size:12px;color:#888">
+        📸 <b>Visual Asset (4:5)</b><br>
+        <span style="font-family:var(--mono);font-size:11px;color:#aaa">${esc(p.image_prompt || 'Typographic post card or site photograph')}</span>
+      </div>
+      <div class="mock-body">${esc(text)}</div>
+      <div class="mock-footer">
+        <span>❤️ 184</span>
+        <span>💬 42</span>
+        <span>↗️ Share</span>
+        <div class="grow"></div>
+        <span>🔖</span>
+      </div>
+    `;
+  } else if (capPlat === 'FB') {
+    container.innerHTML = `
+      <div class="social-mock-header">
+        <div class="mock-avatar" style="background:#1877f2">f</div>
+        <div class="mock-meta">
+          <b>Fenora — The Window &amp; Glazing OS</b>
+          <span>Just now • 🌐 Public</span>
+        </div>
+      </div>
+      <div class="mock-body">${esc(text)}</div>
+      <div class="mock-footer">
+        <span>👍 Like (67)</span>
+        <span>💬 Comment (31)</span>
+        <span>🔄 Share (14)</span>
+      </div>
+    `;
+  } else {
+    container.innerHTML = `
+      <div class="social-mock-header">
+        <div class="mock-avatar" style="background:#0a66c2">in</div>
+        <div class="mock-meta">
+          <b>Fenora | The Operating System for Windows &amp; Glazing</b>
+          <span>1,420 followers • Promoted</span>
+        </div>
+      </div>
+      <div class="mock-body">${esc(text)}</div>
+      <div class="mock-footer">
+        <span>👍 Celebrate 89</span>
+        <span>💬 27 comments</span>
+        <span>🔁 12 reposts</span>
+      </div>
+    `;
+  }
+}
+
+const btnRaw = $('#btn-mode-raw');
+const btnMock = $('#btn-mode-mock');
+if (btnRaw && btnMock) {
+  btnRaw.onclick = () => {
+    S.composerMode = 'raw';
+    btnRaw.classList.add('on');
+    btnMock.classList.remove('on');
+    $('#cap').hidden = false;
+    $('#cap-mock').hidden = true;
+  };
+  btnMock.onclick = () => {
+    S.composerMode = 'mock';
+    btnMock.classList.add('on');
+    btnRaw.classList.remove('on');
+    $('#cap').hidden = true;
+    $('#cap-mock').hidden = false;
+    renderMockPreview();
+  };
 }
 
 /* ══════════════ SETTINGS ══════════════ */
@@ -999,6 +1109,499 @@ async function postNow(id, plat) {
     toast(`${PLAT_LABEL[plat]} posted ✓${err ? ' (' + err + ')' : ''}`, 'ok');
   } catch (e) {
     toast(`${PLAT_LABEL[plat]}: ${e.message}`, 'err');
+  }
+}
+
+/* ══════════════ TRADE VAULT & STRATEGY ══════════════ */
+const FOREMAN_BANTER = [
+  {
+    id: "FB-01",
+    tag: "Site Insult",
+    quote: "I’d explain it to you, but I left my crayons at home.",
+    context: "Said when a customer or apprentice asks why a 1200mm frame won't fit a 1150mm opening."
+  },
+  {
+    id: "FB-02",
+    tag: "Foreman Wisdom",
+    quote: "You’ve got two brain cells and they’re both fighting for third place.",
+    context: "Said when Dave measures a 3-facet bay window with a free 2-metre tape from a Christmas cracker."
+  },
+  {
+    id: "FB-03",
+    tag: "Site Reality",
+    quote: "If common sense was petrol, you couldn’t drive a piss-ant scooter across a fucking matchstick.",
+    context: "Said when the homeowner asks if you can 'just make the Anthracite Grey a bit warmer' after the powder-coater ran it."
+  },
+  {
+    id: "FB-04",
+    tag: "Foreman Banter",
+    quote: "You’re not completely useless. You can always serve as a bad example.",
+    context: "Said to the builder who assured you the structural opening would be 100% ready on Friday morning."
+  },
+  {
+    id: "FB-05",
+    tag: "Structural Truth",
+    quote: "I’ve seen wet cement with more structural integrity than you.",
+    context: "Said when looking at a Victorian timber lintel held together by wallpaper paste and optimism."
+  },
+  {
+    id: "FB-06",
+    tag: "Brutal Honesty",
+    quote: "You couldn’t pour piss out of a boot if the instructions were written on the heel.",
+    context: "Said when the apprentice drops his last magnetic T30 Torx bit down into a 3-metre cavity wall."
+  },
+  {
+    id: "FB-07",
+    tag: "Trade Banter",
+    quote: "You’ve got the work ethic of a Sunday afternoon.",
+    context: "Said at 2:15 PM on a Friday when someone suggests packing up the van early."
+  },
+  {
+    id: "FB-08",
+    tag: "Jobsite Truth",
+    quote: "I’ve met fucking idiots before, but you’ve got tenure.",
+    context: "Said when looking at an office desktop with 30 PDF quotes named FINAL_FINAL_USE_THIS_ONE."
+  },
+  {
+    id: "FB-09",
+    tag: "Darwin Award",
+    quote: "You’re living proof that evolution sometimes takes a lunch break.",
+    context: "Said when a customer asks if they can remove Part F trickle vents to save £15 on a £4,000 composite door."
+  },
+  {
+    id: "FB-10",
+    tag: "Measuring Truth",
+    quote: "Your tape measure must be printed in fairy millimetres.",
+    context: "Said when the reveal was called 1800 on the quote but measures 1765 on site."
+  },
+  {
+    id: "FB-11",
+    tag: "Office vs Site",
+    quote: "I've seen spirit levels with more balance than your quoting spreadsheet.",
+    context: "Said when an owner realises their 30% markup turned into an 8% landed loss after fuel and ancillaries."
+  },
+  {
+    id: "FB-12",
+    tag: "Installation Detail",
+    quote: "That silicone bead looks like a toothpaste tube exploded on a bouncy castle.",
+    context: "Said when someone tries to bridge a 35mm masonry gap with three tubes of white mastic."
+  },
+  {
+    id: "FB-13",
+    tag: "The Paperwork Void",
+    quote: "You've got 47 WhatsApp chats and not one of them knows what size the glass is.",
+    context: "Said while standing in the rain waiting for the glass lorry on a Tuesday morning."
+  },
+  {
+    id: "FB-14",
+    tag: "Site Surveying",
+    quote: "I'd agree with your survey, but then we'd both be wrong and £2,000 in the hole.",
+    context: "Said when reviewing a bay angle drawn as a right angle on a piece of cardboard."
+  }
+];
+
+function initVaultEvents() {
+  const vtabs = $('#vault-subtabs');
+  if (vtabs) {
+    vtabs.onclick = e => {
+      const b = e.target.closest('button');
+      if (!b) return;
+      S.vaultTab = b.dataset.vtab;
+      $$('#vault-subtabs button').forEach(x => x.classList.toggle('on', x === b));
+      renderVault();
+    };
+  }
+}
+
+function initStrategyEvents() {
+  const stabs = $('#strat-subtabs');
+  if (stabs) {
+    stabs.onclick = e => {
+      const b = e.target.closest('button');
+      if (!b) return;
+      S.stratTab = b.dataset.stab;
+      $$('#strat-subtabs button').forEach(x => x.classList.toggle('on', x === b));
+      renderStrategy();
+    };
+  }
+}
+
+function parseSlides(body) {
+  const lines = String(body || '').split('\n').filter(l => l.trim().startsWith('Slide '));
+  if (lines.length) return lines.map(l => l.replace(/^Slide \d+:\s*/, '').trim());
+  return String(body || '').split('\n\n').filter(Boolean);
+}
+
+function renderVault() {
+  const c = $('#vault-content');
+  if (!c) return;
+  const tab = S.vaultTab || 'banter';
+
+  if (tab === 'banter') {
+    const cur = FOREMAN_BANTER[S.banterIdx % FOREMAN_BANTER.length];
+    c.innerHTML = `
+      <div class="banter-box">
+        <span class="banter-tag">⚡ ${esc(cur.tag)}</span>
+        <div class="banter-quote">“${esc(cur.quote)}”</div>
+        <div class="banter-meta"><b>Context:</b> ${esc(cur.context)}</div>
+        <div class="banter-actions">
+          <button class="btn sm" id="v-next-banter">⚡ Next Foreman Truth</button>
+          <button class="btn ghost sm" id="v-copy-banter">📋 Copy Banter</button>
+          <button class="btn ghost sm" id="v-compose-banter">✍️ Use as Hook in Composer</button>
+        </div>
+      </div>
+      <h3 style="margin-top:20px;color:var(--tx2)">Site-Tested Banter &amp; Insults Vault</h3>
+      <p class="lede">Click any insult below to put it in the spotlight, copy it, or spin it into a high-reach post hook.</p>
+      <div class="banter-grid">
+        ${FOREMAN_BANTER.map((b, idx) => `
+          <div class="banter-card" data-bidx="${idx}">
+            <p>“${esc(b.quote)}”</p>
+            <div class="banter-card-foot">
+              <span>${esc(b.tag)}</span>
+              <span style="color:#f26b21">Click to select →</span>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+
+    $('#v-next-banter').onclick = () => { S.banterIdx = (S.banterIdx + 1) % FOREMAN_BANTER.length; renderVault(); };
+    $('#v-copy-banter').onclick = () => copy(`“${cur.quote}”`, 'Foreman quote copied');
+    $('#v-compose-banter').onclick = () => {
+      newPost();
+      $('#c-hook').value = `“${cur.quote}”`;
+      const p = find(CUR);
+      if (p) { sched(CUR).hook = `“${cur.quote}”`; showCap(); }
+    };
+    $$('[data-bidx]').forEach(el => el.onclick = () => {
+      S.banterIdx = +el.dataset.bidx;
+      renderVault();
+    });
+    return;
+  }
+
+  if (tab === 'carousels') {
+    const carousels = S.posts.filter(p => p.format === 'carousel');
+    const p = carousels.find(x => x.id === S.carouselPostId) || carousels[0];
+    if (!p) { c.innerHTML = '<div class="empty">No carousels in library</div>'; return; }
+    const slides = parseSlides(p.body);
+    const curIdx = Math.min(S.carouselSlide, slides.length - 1);
+    const slideText = slides[curIdx] || 'Slide text';
+
+    c.innerHTML = `
+      <div class="row gap wrap" style="margin-bottom:14px">
+        <label style="font-size:13px;color:var(--tx2)">Select Carousel:</label>
+        <select id="v-carousel-sel" class="mini grow" style="max-width:380px">
+          ${carousels.map(x => `<option value="${x.id}"${x.id === p.id ? ' selected' : ''}>${x.id}: ${esc(x.hook.slice(0, 50))}…</option>`).join('')}
+        </select>
+        <button class="btn sm" id="v-car-open">Open in Composer</button>
+        <button class="btn ghost sm" id="v-car-copy">Copy All Slides</button>
+      </div>
+      <div class="carousel-viewer">
+        <div class="carousel-slide-card">
+          <div class="carousel-slide-head">
+            <span class="slide-num">Slide ${curIdx + 1} of ${slides.length}</span>
+            <span class="pill">${esc(p.id)}</span>
+          </div>
+          <div class="carousel-slide-text">
+            ${curIdx === 0 ? `<h2 style="font-size:20px;color:#fff;margin-bottom:12px">${esc(slideText)}</h2><p style="color:var(--tx2);font-size:13px">Swipe to see the breakdown →</p>` : `<p style="font-size:16px;line-height:1.6">${esc(slideText)}</p>`}
+          </div>
+          <div class="slide-nav">
+            <button class="btn ghost sm" id="v-slide-prev"${curIdx === 0 ? ' disabled' : ''}>← Prev</button>
+            <div class="slide-indicators">
+              ${slides.map((_, i) => `<span class="slide-dot${i === curIdx ? ' active' : ''}"></span>`).join('')}
+            </div>
+            <button class="btn ghost sm" id="v-slide-next"${curIdx === slides.length - 1 ? ' disabled' : ''}>Next →</button>
+          </div>
+        </div>
+        <div class="strat-card" style="background:var(--bg3)">
+          <h3>${esc(p.hook)}</h3>
+          <p class="lede" style="margin-bottom:12px">${esc(p.pillar_label || p.pillar)} • Carousel format</p>
+          <div style="background:var(--bg2);padding:14px;border-radius:8px;font-size:12.5px;color:var(--tx2);line-height:1.6;white-space:pre-wrap;max-height:280px;overflow:auto">${esc(p.body)}</div>
+          <div style="margin-top:14px;font-size:12px;color:var(--tx3)"><b>CTA:</b> ${esc(p.cta || 'fenora.pro')}</div>
+        </div>
+      </div>
+    `;
+
+    $('#v-carousel-sel').onchange = e => {
+      S.carouselPostId = e.target.value;
+      S.carouselSlide = 0;
+      renderVault();
+    };
+    $('#v-slide-prev').onclick = () => { if (S.carouselSlide > 0) { S.carouselSlide--; renderVault(); } };
+    $('#v-slide-next').onclick = () => { if (S.carouselSlide < slides.length - 1) { S.carouselSlide++; renderVault(); } };
+    $('#v-car-open').onclick = () => openPost(p.id);
+    $('#v-car-copy').onclick = () => copy(p.body, 'All carousel slides copied');
+    return;
+  }
+
+  if (tab === 'reels') {
+    const reels = S.posts.filter(p => p.format === 'reel');
+    c.innerHTML = `
+      <div class="storyboard-grid">
+        ${reels.map(r => `
+          <div class="storyboard-card">
+            <div class="storyboard-head">
+              <span class="mono pill id">${esc(r.id)}</span>
+              <span class="time-tag">Reel Video</span>
+            </div>
+            <div class="storyboard-title">“${esc(r.hook)}”</div>
+            <div class="shot-box" style="white-space:pre-wrap;max-height:220px;overflow:auto">${esc(r.body)}</div>
+            <div class="row gap" style="margin-top:auto">
+              <button class="btn sm grow" data-open-id="${r.id}">Open in Composer</button>
+              <button class="btn ghost sm" data-copy-body="${esc(r.body)}">Copy Script</button>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+    $$('[data-open-id]').forEach(b => b.onclick = () => openPost(b.dataset.openId));
+    $$('[data-copy-body]').forEach(b => b.onclick = () => copy(b.dataset.copyBody, 'Reel script copied'));
+    return;
+  }
+
+  // Generic card grid for FLW, lies, memes, edu, product, authority
+  const seriesMap = {
+    flw: 'Famous Last Words',
+    lies: 'Relatable Lies',
+    memes: 'Construction Memes',
+    edu: 'Educational Guides',
+    product: 'Product Workflows',
+    authority: 'LinkedIn Authority'
+  };
+  const targetSeries = seriesMap[tab];
+  const items = S.posts.filter(p => p.series === targetSeries || (tab === 'flw' && p.id.startsWith('FLW-')) || (tab === 'lies' && p.id.startsWith('RCL-')) || (tab === 'memes' && p.id.startsWith('MEM-')) || (tab === 'edu' && p.id.startsWith('EDU-')) || (tab === 'product' && p.id.startsWith('PRD-')) || (tab === 'authority' && p.id.startsWith('LIA-')));
+
+  c.innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(320px, 1fr));gap:16px">
+      ${items.map(p => `
+        <div class="strat-card">
+          <div class="row gap">
+            <span class="mono pill id">${esc(p.id)}</span>
+            <span class="pill">${esc(p.pillar_label || p.pillar)}</span>
+            <div class="grow"></div>
+            <span class="pill">${PFMT[p.format] || esc(p.format)}</span>
+          </div>
+          <h3 style="color:#fff;font-size:15px;margin:4px 0">“${esc(p.hook)}”</h3>
+          <p style="font-size:12.5px;color:var(--tx2);line-height:1.55;white-space:pre-wrap;max-height:160px;overflow:auto">${esc(p.body)}</p>
+          <div class="row gap" style="margin-top:auto;padding-top:10px;border-top:1px solid var(--line)">
+            <button class="btn sm grow" data-open-id="${p.id}">Open in Composer</button>
+            <button class="btn ghost sm" data-copy-hook="${esc(p.hook)}">Copy Hook</button>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+  $$('[data-open-id]').forEach(b => b.onclick = () => openPost(b.dataset.openId));
+  $$('[data-copy-hook]').forEach(b => b.onclick = () => copy(b.dataset.copyHook, 'Hook copied'));
+}
+
+function renderStrategy() {
+  const c = $('#strat-content');
+  if (!c) return;
+  const tab = S.stratTab || 'positioning';
+
+  if (tab === 'positioning') {
+    c.innerHTML = `
+      <div class="strat-grid">
+        <div class="strat-card">
+          <span class="strat-badge badge-gold">CORE POSITIONING</span>
+          <h3>One Job. One Place.</h3>
+          <p>Fenora is the construction-native operating system for window, door, and glazing businesses. It replaces the 14-app mess with a single unified job record from initial survey to final milestone sign-off.</p>
+        </div>
+        <div class="strat-card">
+          <span class="strat-badge badge-blue">PRIMARY AUDIENCE</span>
+          <h3>Window &amp; Door Businesses</h3>
+          <p>Installers, joineries, timber/uPVC/aluminium fabricators, sash specialists, architectural glazing companies (2–50 employees) struggling with disconnected quoting, messy surveys, and supplier miscommunication.</p>
+        </div>
+        <div class="strat-card">
+          <span class="strat-badge badge-green">THE ENEMY</span>
+          <h3>"The Way You've Always Done It"</h3>
+          <p>The enemy is not another SaaS vendor. The enemy is WhatsApp voice notes, unformatted Excel sheets, scribbled notebooks in the van footwell, and 30 PDFs named FINAL_FINAL_2.</p>
+        </div>
+      </div>
+
+      <div class="strat-card" style="margin-top:10px">
+        <h3>The Construction Customer Persona</h3>
+        <p class="lede">Trades business owners aren't looking for 'integrated digital synergy'. They are firefighting real site friction:</p>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(240px, 1fr));gap:12px;margin-top:10px">
+          <div style="background:var(--bg3);padding:12px;border-radius:8px;font-size:13px;color:#fff">“Where the fuck did that quote go?”</div>
+          <div style="background:var(--bg3);padding:12px;border-radius:8px;font-size:13px;color:#fff">“Who measured this opening?”</div>
+          <div style="background:var(--bg3);padding:12px;border-radius:8px;font-size:13px;color:#fff">“Did anyone ever invoice High Street?”</div>
+          <div style="background:var(--bg3);padding:12px;border-radius:8px;font-size:13px;color:#fff">“Why is the drawing different from the quote?”</div>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  if (tab === 'funnel') {
+    c.innerHTML = `
+      <div class="strat-grid">
+        <div class="strat-card">
+          <span class="strat-badge badge-gold">LAYER 1 • 70% SHARE</span>
+          <h3>Peers &amp; Trade Workforce</h3>
+          <p><b>Target:</b> Fitters, joiners, surveyors, apprentices, builders.<br>
+          <b>Content:</b> Relatable humour, famous last words, site fails, memes, brutal foreman banter.<br>
+          <b>Outcome:</b> Follows, virality, peer tagging, genuine trade credibility.</p>
+        </div>
+        <div class="strat-card">
+          <span class="strat-badge badge-blue">LAYER 2 • 25% SHARE</span>
+          <h3>Buyers &amp; Decision Makers</h3>
+          <p><b>Target:</b> MDs, owners, operations managers, commercial directors.<br>
+          <b>Content:</b> Quoting margins, admin drain, cash flow velocity, regulation guides, software breakdown.<br>
+          <b>Outcome:</b> Inbound DMs, demo requests, website investigations.</p>
+        </div>
+        <div class="strat-card">
+          <span class="strat-badge badge-green">LAYER 3 • 5% SHARE</span>
+          <h3>Direct Product Conversion</h3>
+          <p><b>Target:</b> Active evaluators &amp; frustrated owners.<br>
+          <b>Content:</b> 2D configurator walkthroughs, before/after workflow comparisons, direct CTAs.<br>
+          <b>Outcome:</b> Trials, subscriptions, active accounts.</p>
+        </div>
+      </div>
+      <div class="strat-card" style="margin-top:14px">
+        <h3>The Funnel Conversion Engine</h3>
+        <p>Fitters see our reels and memes on Instagram at 6:30 PM → They tag their mate or send it to the company WhatsApp group → The owner watches it and smiles → Next day on LinkedIn, the owner sees our post on why 10-person window firms leak £30k in unpriced variations → The owner books a walkthrough at fenora.pro.</p>
+      </div>
+    `;
+    return;
+  }
+
+  if (tab === 'voice') {
+    c.innerHTML = `
+      <div class="do-dont-grid">
+        <div class="do-box">
+          <h4>✅ HOW FENORA SPEAKS (Foreman Voice)</h4>
+          <ul class="voice-list">
+            <li><b>Dry, cynical, site-tested humour:</b> “I’d explain it to you, but I left my crayons at home.”</li>
+            <li><b>Concrete site consequences:</b> Blown lintels, wrong cill projections, 4-hour stand-downs.</li>
+            <li><b>Construction-native vocabulary:</b> Reveals, datum lines, meeting rails, astragals, Part F.</li>
+            <li><b>Relatable human truths:</b> The Greggs bakery bag CAD drawing, the van sun visor filing cabinet.</li>
+            <li><b>The Litmus Test:</b> Would a 35-year-old window fitter with 15 years on site actually say this?</li>
+          </ul>
+        </div>
+        <div class="dont-box">
+          <h4>❌ WHAT FENORA NEVER SAYS (Banned SaaS Clichés)</h4>
+          <ul class="voice-list">
+            <li><b>No Silicon Valley buzzwords:</b> “Revolutionise”, “Supercharge”, “Game-changing”.</li>
+            <li><b>No generic puns:</b> “Nailed it”, “Groundbreaking”, “Raising the roof”.</li>
+            <li><b>No fake motivation:</b> “Unlock your true potential”, “Work smarter not harder”.</li>
+            <li><b>No patronising explanations:</b> Never lecture a craftsman on how to hang a sash.</li>
+            <li><b>No AI screaming:</b> Never say “AI is disrupting construction”. Say “it reads messy tender PDFs”.</li>
+          </ul>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  if (tab === 'diff') {
+    c.innerHTML = `
+      <div class="strat-card">
+        <h3>Competitive Differentiation Matrix</h3>
+        <p class="lede">Why generic software tools fail the window, door, and glazing trade:</p>
+        <table class="strat-table">
+          <thead>
+            <tr>
+              <th>Capability</th>
+              <th>Generic CRM (HubSpot/Pipedrive)</th>
+              <th>Quoting-Only Tools (Windowmaker)</th>
+              <th>Generic PM (Monday/Asana)</th>
+              <th>Fenora Operating System</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><b>2D Parametric Drawings</b></td>
+              <td>❌ None</td>
+              <td>⚠️ Clunky legacy desktop CAD</td>
+              <td>❌ None</td>
+              <td><b>✅ Real-time 2D elevations + DXF</b></td>
+            </tr>
+            <tr>
+              <td><b>Site Survey Mobile Validation</b></td>
+              <td>❌ Text fields only</td>
+              <td>❌ Office desktop only</td>
+              <td>⚠️ Generic custom checklist</td>
+              <td><b>✅ Guided 3-point reveal checks + photos</b></td>
+            </tr>
+            <tr>
+              <td><b>Building Regs Compliance (Part F/L)</b></td>
+              <td>❌ None</td>
+              <td>⚠️ Basic U-value table</td>
+              <td>❌ None</td>
+              <td><b>✅ Automated Part F &amp; L compliance engine</b></td>
+            </tr>
+            <tr>
+              <td><b>Variation Order Management</b></td>
+              <td>❌ Manual deals</td>
+              <td>❌ Re-quote required</td>
+              <td>⚠️ Generic ticket</td>
+              <td><b>✅ 1-click mobile variation + customer sign</b></td>
+            </tr>
+            <tr>
+              <td><b>Milestone Invoicing &amp; Cash Flow</b></td>
+              <td>❌ Generic integration</td>
+              <td>❌ None</td>
+              <td>❌ None</td>
+              <td><b>✅ Instant milestone trigger upon site sign-off</b></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    `;
+    return;
+  }
+
+  if (tab === 'leadgen') {
+    c.innerHTML = `
+      <div class="strat-grid">
+        <div class="strat-card">
+          <span class="strat-badge badge-gold">LEAD MAGNET 1</span>
+          <h3>Bay Survey Triangulation Calculator</h3>
+          <p>Free interactive tool that calculates exact bay post deduction angles from chord and projection inputs. Eliminates the #1 cause of bay remake disasters.<br><b>Capture:</b> Mobile &amp; Company Name.</p>
+        </div>
+        <div class="strat-card">
+          <span class="strat-badge badge-blue">LEAD MAGNET 2</span>
+          <h3>Part F &amp; Part L 2024 Trade Playbook</h3>
+          <p>Downloadable 8-page field guide breaking down trick-vent requirements, equivalent area rules, and how to defend compliance against stubborn homeowners.<br><b>Capture:</b> Business Email.</p>
+        </div>
+        <div class="strat-card">
+          <span class="strat-badge badge-green">LEAD MAGNET 3</span>
+          <h3>True Landed Cost Calculator</h3>
+          <p>Interactive spreadsheet auditing hidden consumables, wasted merchant trips, and unpriced variations. Shows owners their true net margin per fitted frame.<br><b>Capture:</b> Email &amp; Van Count.</p>
+        </div>
+      </div>
+      <div class="strat-card" style="margin-top:14px">
+        <h3>The 60-Second Frictionless Demo Flow</h3>
+        <p>No 45-minute discovery calls with a junior SDR. Glazing business owners click from social straight into an interactive sandbox: configure a 3-pane bifold, adjust dimensions, and see the live price and DXF output in 60 seconds.</p>
+      </div>
+    `;
+    return;
+  }
+
+  if (tab === 'growth') {
+    c.innerHTML = `
+      <div class="strat-grid">
+        <div class="strat-card">
+          <span class="strat-badge badge-gold">LOOP 1</span>
+          <h3>The 20-Minute Daily Commenting Routine</h3>
+          <p>8 authentic comments daily on peer trade reels and fail accounts. Never pitch. Add trade facts, share war stories, and make fitters laugh. Drives 40+ profile visits daily organically.</p>
+        </div>
+        <div class="strat-card">
+          <span class="strat-badge badge-blue">LOOP 2</span>
+          <h3>Tag-a-Mate Engagement Prompts</h3>
+          <p>Posts explicitly designed around relatable trade pain: “Tag the fitter who forgets the cill on Monday morning” or “Drop your score from 1 to 9”. Generates massive comment threads.</p>
+        </div>
+        <div class="strat-card">
+          <span class="strat-badge badge-green">LOOP 3</span>
+          <h3>Trade Counter &amp; Supplier Co-Marketing</h3>
+          <p>Strategic partnerships with aluminium systems houses and glass processors. Suppliers promote Fenora because orders arrive formatted, clean, and error-free.</p>
+        </div>
+      </div>
+    `;
+    return;
   }
 }
 
