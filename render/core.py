@@ -65,7 +65,9 @@ def TW(d, txt, f):
 
 # ── Canvas helpers ───────────────────────────────────────────────────────
 def new(w, h, bg):
-    im = Image.new("RGB", (w * SS, h * SS), bg)
+    # Callers pass already-supersampled dimensions (W0*SS × H0*SS) so all
+    # drawing code can treat W,H as the full canvas; finish() scales back down.
+    im = Image.new("RGB", (w, h), bg)
     return im, ImageDraw.Draw(im, "RGBA")
 
 
@@ -347,10 +349,16 @@ def footers(d, W, H, bg_light, pillar):
     ink = PAL["mute"] if bg_light else PAL["dim"]
     fy = H - int(H * 0.042)
     fs = int(W * 0.0245)
-    d.text((int(W * 0.075), fy), "FENORA", font=F(fs, 800), fill=ORANGE, anchor="lm")
-    d.text((int(W * 0.075) + int(W * 0.098), fy), "fenora.pro", font=F(int(fs * 0.94), 500), fill=ink, anchor="lm")
-    d.line([(int(W * 0.925) - int(fs * 5.2), fy), (int(W * 0.925) - int(fs * 0.4), fy)], fill=ink, width=1)
-    d.text((int(W * 0.925), fy), pillar.upper(), font=F(int(fs * 0.82), 700), fill=ink, anchor="rm")
+    x = int(W * 0.075)
+    brand_f = F(fs, 800)
+    d.text((x, fy), "FENORA", font=brand_f, fill=ORANGE, anchor="lm")
+    x2 = x + d.textlength("FENORA", font=brand_f) + int(W * 0.017)
+    d.text((x2, fy), "fenora.pro", font=F(int(fs * 0.94), 500), fill=ink, anchor="lm")
+    pfont = F(int(fs * 0.82), 700)
+    px = int(W * 0.925)
+    pw = d.textlength(pillar.upper(), font=pfont)
+    d.text((px, fy), pillar.upper(), font=pfont, fill=ink, anchor="rm")
+    d.line([(px - pw - int(fs * 1.35), fy), (px - pw - int(fs * 0.5), fy)], fill=ink, width=max(2, int(W * 0.0013)))
 
 
 def arched_outline(d, cx, top, w, h, color, t):
