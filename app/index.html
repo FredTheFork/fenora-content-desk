@@ -229,7 +229,7 @@
         <section>
           <h2>Posting to</h2>
           <div id="conn-status" class="conn"></div>
-          <div id="conn-form">
+          <form id="conn-form" onsubmit="return false">
             <p class="muted small">Without these, everything still works in <b>copy mode</b> — one click puts the right caption on your clipboard and the image in your downloads.</p>
             <div class="fgroup"><label>Instagram Business account ID</label><input id="s-iguser" placeholder="1784140…" autocomplete="off"></div>
             <div class="fgroup"><label>Meta access token <span class="muted">(instagram_content_publish + pages_manage_posts)</span></label><input id="s-mtoken" type="password" placeholder="EAAG…" autocomplete="off"></div>
@@ -237,10 +237,10 @@
             <div class="fgroup"><label>Facebook Page token</label><input id="s-ptoken" type="password" placeholder="EAAG…" autocomplete="off"></div>
             <div class="fgroup"><label>LinkedIn organisation URN</label><input id="s-orgurn" placeholder="urn:li:organization:…" autocomplete="off"></div>
             <div class="fgroup"><label>LinkedIn access token <span class="muted">(w_organization_social)</span></label><input id="s-litoken" type="password" placeholder="AQV…" autocomplete="off"></div>
-            <div class="row gap"><button class="btn" id="s-save">Save</button></div>
+            <div class="row gap"><button class="btn" type="button" id="s-save">Save</button></div>
             <p class="muted small">Tokens are written to <code>config.json</code> on your machine. Git-ignored, never sent anywhere but Meta and LinkedIn.</p>
             <div class="fgroup" style="margin-top:14px"><label>Image host endpoint <span class="muted">(optional — for Instagram auto-post from a laptop)</span></label><input id="s-host" placeholder="https://…/upload"></div>
-          </div>
+          </form>
           <div id="conn-env" class="notice" hidden>
             <b>Running on Vercel.</b> Tokens live in your project's
             <b>Environment Variables</b>, not in the browser:
@@ -254,21 +254,6 @@
         </section>
       </div>
     </div>
-  </div>
-</div>
-
-<!-- ════════════════════ WELCOME (first run) ════════════════════ -->
-<div class="welcome" id="welcome" hidden>
-  <div class="w-card">
-    <svg viewBox="0 0 32 32" class="logo"><rect width="32" height="32" rx="7" fill="#000000"/><path d="M16 6a10 8 0 0 1 10 8v12H6V14A8 8 0 0 1 16 6z" fill="none" stroke="#ffffff" stroke-width="2"/><path d="M16 7v19M7 15h18" stroke="#ffffff" stroke-width="1.6"/></svg>
-    <h1>This is the content.<br>Click to post.</h1>
-    <ol class="w-steps">
-      <li><b>Every day, open this page.</b> The posts for the day are already here — picture and words ready to go.</li>
-      <li><b>For each platform, click the button.</b> The caption copies itself and the picture downloads. Paste it into the app and post it.</li>
-      <li><b>Tick Posted.</b> That's it. Green means done.</li>
-    </ol>
-    <p class="w-note">Once a week, press <b>⚡ Plan this week</b> and the next seven days are ready. Everything is saved automatically.</p>
-    <button class="btn big" id="w-go">Plan my first week →</button>
   </div>
 </div>
 
