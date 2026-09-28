@@ -1,8 +1,14 @@
 # tools/
 
-Small helper scripts used by `build.sh`.
+Small helper scripts. Nothing here is needed to run the desk.
 
-- `to_jpg.py` — converts every PNG in `render/png/` to a print-ready-for-social
-  JPEG in `render/jpg/` (quality 92, 4:4:4 chroma, progressive). Cuts the
-  283-image set from ~116 MB to ~22 MB with no visible loss on text.
-  Safe to re-run; it skips files that already exist.
+- `captions_parity.js` — proves that `app/captions.js` (the caption engine the
+  dashboard runs in the browser) reproduces every caption stored in
+  `content/posts.json` byte for byte. Run it after touching either file:
+
+      node tools/captions_parity.js
+
+  On an empty library it passes trivially. It earns its keep the moment you
+  compile posts in bulk from a `content/posts_*.py` part file, because that is
+  when the Python builders in `content/build.py` and the JavaScript ones can
+  quietly drift apart.

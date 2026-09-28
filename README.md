@@ -2,17 +2,18 @@
 
 # Fenora Content Desk
 
-**251 written posts, a designed image for every one, and a calendar that posts to
-Instagram, Facebook and LinkedIn.**
+**An empty desk. Write your posts, plan the calendar, publish to Instagram,
+Facebook and LinkedIn.**
 
 For [fenora.pro](https://fenora.pro) — window business software, from CRM to DXF export.
 
-**This is the content. Click to post.** Every day: open the app, copy each
-caption, save the picture, tick posted. Once a week: press *Plan this week*.
+It ships with **no posts and nothing scheduled**. What it ships with is the
+frame: nine content pillars, the hashtag sets, the house caption engine and a
+calendar that knows how to space things out. You put the content in.
 
 Deploy to **Vercel** (one click — it's a static app + tiny functions), or run
 locally with `node server.js` → `http://localhost:4321`. No build step, no
-`npm install`.
+`npm install`, no dependencies.
 
 </div>
 
@@ -30,7 +31,11 @@ A fitter scrolling at 11pm *will* engage with this:
 
 So this is not a software company posting about software. It's a trade account
 with a software punchline. The product is where the posts point; it's never what
-the post is about. The full strategy is in **[STRATEGY.md](STRATEGY.md)**.
+the post is about. The full strategy — funnel, cadence, platform roles, the
+90-day ramp — is in **[STRATEGY.md](STRATEGY.md)**.
+
+This repo is the tool that strategy runs on. The content that used to ship with
+it has been cleared out so you can start from scratch.
 
 ---
 
@@ -41,105 +46,71 @@ the post is about. The full strategy is in **[STRATEGY.md](STRATEGY.md)**.
 ├── vercel.json              deploy config — the app runs at / with zero setup
 ├── server.js                local server + Instagram/Facebook/LinkedIn publishing
 ├── lib/publish.js           publishing + config helpers shared with api/
-├── api/                     Vercel functions: config, publish, save, load
+├── api/                     Vercel functions: config, publish, save, load, health
 ├── config.example.json      copy to config.json and add your tokens (local runs)
 ├── app/                     the dashboard (no framework, no build)
 │   ├── captions.js          the house caption engine (byte-checked against build.py)
 │   └── app.js
-├── content/                 the 251-post library
-│   ├── posts_a–d.py         written as Python, one file per pillar group
-│   ├── build.py             → posts.json + posts.csv
-│   ├── posts.json           all three platform captions pre-built per post
-│   └── posts.csv            for Buffer / Later / Metricool / Hootsuite
-├── render/
-│   ├── core.py              brand image renderer: layout system + window geometry
-│   ├── render.py            produces a designed PNG for every post
-│   ├── jpg/                 upload-ready JPEGs — committed, deployed with the app
-│   ├── png/                 print masters (git-ignored, ~116 MB)
-│   └── images.json          image manifest the dashboard reads
+├── content/                 the library — empty until you fill it
+│   ├── build.py             compiles posts_*.py → posts.json + posts.csv
+│   ├── posts.json           the frame (pillars, tagsets, banner) + 0 posts
+│   ├── tags.json            hashtag sets and discovery tags
+│   └── schedule.json        your dates, ticks and posts (git-ignored)
 ├── tools/
-│   ├── to_jpg.py            PNG → upload-ready JPEG (116 MB → 22 MB) + manifest
 │   └── captions_parity.js   proves captions.js matches build.py exactly
 └── assets/
-    ├── fonts/               Montserrat variable
-    └── ai/                  AI hero photos (composited by the renderer)
+    ├── Favicon-Logo.png     the brand mark
+    └── fonts/               Montserrat variable, if you ever want it
 ```
+
+No image pipeline. There is no renderer, no rendered artwork and no photo
+library — the desk handles **copy and scheduling**. Artwork is yours: shoot it,
+design it, generate it, then paste a public URL into the post when you want
+Instagram to publish it automatically.
 
 ---
 
-## The content library
+## The desk starts empty
 
-**251 posts** across nine pillars. Every post ships with three finished captions
-(Instagram / Facebook / LinkedIn), a finished image-generator prompt with the house
-style already appended, and a rendered PNG.
+`content/posts.json` holds the frame and nothing else:
 
-| Pillar | Posts | What it's for |
-|---|---:|---|
-| Trade Pain | 56 | the relatable stuff — reveals, dogs, "easy fit", squinting in the rain |
-| Nerd Detail | 48 | the credibility moat — sightlines, astragals, cill projection, trickle vents |
-| Contrarian Takes | 33 | the opinionated stuff — stop pricing fitting as a percentage |
-| Customer Reality | 31 | "just tell me what you'd do", the dog on the job |
-| Planning Apps | 24 | replacement uPVC with uPVC; Article 4; conservation areas |
-| Behind the Scenes | 21 | how the product actually works |
-| Margin & Money | 16 | where the margin actually goes |
-| Build In Public | 13 | shipping notes, published pricing, no fake testimonials |
-| Team & People | 9 | the office, the workshop, the apprentice |
+| Kept | What it does |
+|---|---|
+| **9 pillars** | Trade Pain, Nerd Detail, Customer Reality, Planning Apps, Margin & Money, Contrarian Takes, Behind the Scenes, Build In Public, Team & People |
+| **11 hashtag sets** | one per pillar, plus `core` and `oneliners` |
+| **21 discovery tags** | rotated deterministically by post ID so a week of posts never looks copy-pasted |
+| **Caption engine** | hook → body → CTA → banner, rebuilt per platform: Instagram (with tags), Facebook, LinkedIn (own lead, carousel slides flattened, signed off) |
+| **5 image styles** | house briefs to append when you generate your own artwork |
 
-Roughly **half the library is written to land as a bold text card with no image
-at all** — the cheapest, fastest, highest-reach format available.
+**0 posts. Nothing scheduled. No posted ticks.** The schedule storage key was
+reset too, so an old browser session doesn't drag 251 stale entries back in, and
+any schedule entry pointing at a post that no longer exists is dropped on boot.
 
-### Editing the library
+### Two ways to add content
 
-```bash
-cd content && python3 build.py     # regenerates posts.json + posts.csv
-```
+**1. In the dashboard** — *Library → ＋ New post*. Pick a pillar and a format,
+write the hook and the caption, give it a date. Those posts are yours: they live
+in the browser, are mirrored into `content/schedule.json` when you run the local
+server, are included in **Settings → Backup**, and can be edited or deleted any
+time. This is the normal way to work.
 
-Posts live in `posts_a.py` (trade pain + nerd detail), `posts_b.py` (customers,
-planning, money), `posts_c.py` (contrarian, WIP, build-in-public, team), `posts_d.py`
-(one-liners, POVs, carousels, polls, seasonal, LinkedIn long-form).
-
-Edits you make in the Composer's hook/body/CTA are kept separately in
-`content/schedule.json`, so rebuilding never loses them.
-
----
-
-## The image renderer
-
-There is no image for 251 posts. So this repo draws them.
-
-`render/render.py` renders a **designed, on-brand image for every post** — not
-filler. It has a layout system (statement, quote, number, diagram, product, split,
-photo) and a library of **real window geometry** drawn as vector art: sash and
-casement elevations, box-sash and spiral frames, glazing-bar patterns, sightline
-diagrams, cill sections with horns and fall, frame profile cross-sections, reveal
-sections, canted-bay plans, trickle vents, delivery loads, and abstract product UI.
+**2. In bulk, from Python** — drop a part file at `content/posts_a.py` defining
+`POSTS = [ {...}, {...} ]`, then:
 
 ```bash
-cd render && python3 render.py            # all 251
-cd render && python3 render.py TP-01 ND-05   # just those
+cd content && python3 build.py     # → posts.json + posts.csv + tags.json
 ```
 
-Each post's geometry is chosen from its own subject matter, so a post about a cill
-detail gets a cill section and a post about sightlines gets a sightline diagram.
-Light and dark cards alternate so a profile grid has rhythm.
+Every `content/posts_*.py` file is picked up automatically in filename order, so
+you can keep one file per pillar group. A post needs `id`, `pillar`, `format`,
+`hook` and `body`; `cta`, `cta_fb`, `li_lead`, `platforms`, `tags`, `series`,
+`prompt` and `style` are optional. `content/build.py` documents each key.
+Library posts are read-only in the dashboard — recompile them from source — but
+every edit you make in the composer is stored separately in `schedule.json`, so
+rebuilding never loses your work.
 
-**AI hero photos** go in `assets/ai/<POST-ID>.png`. If one exists the renderer uses
-it as a full-bleed photo with a legibility plate; otherwise it draws the card. The
-12 shipped ones cover the posts where a photograph genuinely beats a graphic.
-
-Each post is rendered at **4:5** (Instagram + Facebook feed) and the 32
-vertical formats also get **9:16** (Stories / Reels cover) — 283 files in all.
-
-`tools/to_jpg.py` then writes a matching JPEG set into `render/jpg/` at
-quality 92 with 4:4:4 chroma. The dashboard and the zip bundle both prefer
-those, which takes the set from 116 MB to 22 MB with no visible loss on text.
-Use `render/png/` when you want the print masters.
-
-Requires Pillow. Montserrat (variable) is vendored in `assets/fonts/`.
-
-```bash
-./build.sh            # compile content → render 283 PNGs → export JPEG → zip
-```
+`content/posts.csv` is regenerated alongside the JSON for Buffer, Later,
+Metricool or Hootsuite if you'd rather schedule somewhere else.
 
 ---
 
@@ -148,53 +119,64 @@ Requires Pillow. Montserrat (variable) is vendored in `assets/fonts/`.
 Four tabs, and the first one is the whole product:
 
 - **Today** — the day's posts, ready to go. For every platform: one click copies
-  the caption *and* downloads the picture. Paste, post, tick **Posted** — the row
-  goes green, the day goes green. A day strip shows the week at a glance, and a
-  streak counter counts the days everything got posted.
-- **Calendar** — month view with image thumbnails. Click an empty day to fill it.
-  **⚡ Plan this week** lays out the next seven days — two posts a day, every day,
-  pillar mix weighted, no pillar twice in a day. Plan 30 / 90 days does the same
-  for a month or a quarter. Drag any Library card onto a date to place it by hand.
-- **Library** — all 251 with thumbnails. Search and filter by pillar, format,
-  status.
-- **Grow** — the 20-minute daily commenting routine and 26 click-to-copy
-  comment templates.
+  the right caption. Paste, post, tick **Posted** — the row goes green, the day
+  goes green. A day strip shows the week at a glance and a streak counter counts
+  the days everything got posted. When the desk is empty this screen says so and
+  offers **＋ New post**.
+- **Calendar** — month view of everything planned. Click an empty day to fill it.
+  **⚡ Plan this week** lays out the next seven days — two posts a day, pillar mix
+  weighted, no pillar twice in a day. Plan 30 / 90 days does the same for a month
+  or a quarter. Drag any Library card onto a date to place it by hand.
+- **Library** — every post, searchable and filterable by pillar, format and
+  status. **＋ New post** starts one; clicking a card opens the composer.
+- **Grow** — the 20-minute daily commenting routine and 26 click-to-copy comment
+  templates, because half of this strategy isn't your own posts.
 
-The **composer** is a drawer: edit the hook, caption, CTA and LinkedIn lead, and
-the three platform captions rebuild live (the same engine that wrote them —
-`node tools/captions_parity.js` proves it matches `content/build.py` byte for
-byte). Type over a caption to pin your own version.
+The **composer** is a drawer: pillar, format, schedule, platforms, and the hook,
+caption, CTA and LinkedIn lead. The three platform captions rebuild live as you
+type — the same engine that writes them at build time
+(`node tools/captions_parity.js` proves the two match byte for byte). Type over a
+caption to pin your own version. Under **Artwork** you can keep an image brief
+for whoever makes the picture, and paste the public image URL Instagram needs.
 
-Your schedule lives in the browser (localStorage) and is mirrored to
-`content/schedule.json` when the local server is running. **Settings → Backup**
-downloads the lot as JSON — do it now and then.
+Your schedule and your posts live in the browser (localStorage) and are mirrored
+to `content/schedule.json` when the local server is running. **Settings →
+Backup** downloads the lot as JSON — do it now and then. **Settings → Clear the
+whole desk** wipes every date, tick and post you wrote, if you want another
+scratch start.
 
 ---
 
 ## Deploy on Vercel
 
-Import the repo into Vercel and press deploy. That's it:
+Import the repo into Vercel and press deploy. That's it — no build command, the
+dashboard is served from `/app/index.html`, and the functions in `/api` provide
+config, publishing, persistence acknowledgement and a health check.
 
-- The dashboard is served at `/` (static files + the functions in `api/`).
-- The rendered JPEGs are committed in `render/jpg/`, so every post ships with
-  its image — and because they're served from your public URL, **Instagram
-  auto-posting works with no extra image host**.
-- The schedule lives in the browser; use **Settings → Backup** to move it
-  between machines.
+1. Import this repository into your Vercel project and deploy the branch.
+2. Optional — add these under **Project Settings → Environment Variables** and
+   **Post now** buttons appear next to every caption:
 
-Optional — add these under **Project Settings → Environment Variables** and
-**Post now** buttons appear next to every caption:
+   ```
+   META_TOKEN           long-lived Meta token (instagram_content_publish, pages_manage_posts)
+   FB_PAGE_ID           Facebook Page ID
+   FB_PAGE_TOKEN        Facebook Page token
+   IG_USER_ID           Instagram Business account ID
+   LI_ORG_URN           urn:li:organization:…
+   LI_TOKEN             token with w_organization_social
+   META_GRAPH_VERSION      (optional, default v21.0)
+   LINKEDIN_VERSION        (optional, default 202601)
+   IMAGE_HOST_ENDPOINT     (optional — API-level artwork uploader, see below)
+   ```
 
-```
-META_TOKEN        long-lived Meta token (instagram_content_publish, pages_manage_posts)
-FB_PAGE_ID        Facebook Page ID
-FB_PAGE_TOKEN     Facebook Page token
-IG_USER_ID        Instagram Business account ID
-LI_ORG_URN        urn:li:organization:…
-LI_TOKEN          token with w_organization_social
-META_GRAPH_VERSION   (optional, default v21.0)
-IMAGE_HOST_ENDPOINT  (optional)
-```
+3. Verify `https://your-domain.example/api/health` returns JSON with `ok: true`.
+4. Open the domain root. Everything the dashboard reads comes from the same
+   origin, so it never depends on localhost or a separate server.
+
+On Vercel there is no writable disk worth keeping, so the browser copy of your
+schedule and your posts is authoritative — use **Settings → Backup** to move it
+between machines or deployments. Locally, `node server.js` writes the same state
+to `content/schedule.json` (git-ignored).
 
 ---
 
@@ -202,15 +184,15 @@ IMAGE_HOST_ENDPOINT  (optional)
 
 ### Copy mode — works immediately, zero setup
 
-Every post has a **Copy caption & save image** button per platform: the right
-caption hits your clipboard and the rendered picture lands in Downloads. Paste
-into the app, attach the picture, post. Tick **Posted**. This is the whole daily
-routine and it works everywhere — including a school laptop.
+Every post has a **Copy caption** button per platform: the right caption for
+that platform hits your clipboard, hashtags and banner included. Paste into the
+app, attach your own picture, post, tick **Posted**. This is the whole daily
+routine and it works everywhere — including a laptop you don't control.
 
 ### API mode — posts for real
 
-Facebook and LinkedIn posts work directly from the dashboard once tokens are in
-**Settings** (or Vercel env vars). Instagram needs one extra step.
+Facebook and LinkedIn publish directly from the dashboard once tokens are in
+**Settings** (or Vercel env vars). Instagram needs one extra thing.
 
 1. Instagram must be a **Business or Creator** account linked to a **Facebook Page**.
 2. [developers.facebook.com](https://developers.facebook.com) → create an app → add
@@ -224,12 +206,17 @@ Facebook and LinkedIn posts work directly from the dashboard once tokens are in
 6. Local runs: paste into **Settings → Save**. Vercel: put them in the
    environment variables above.
 
-**The Instagram caveat, plainly:** Meta requires a *publicly reachable* image URL.
-On Vercel that's automatic — the app hands Meta its own `/render/jpg/…` URL. From
-a laptop, either paste a public image URL into the composer (Edit → Advanced) or
-point **Image host endpoint** at a small uploader (a Cloudflare Worker, a Vercel
-function, a presigned S3 POST): the dashboard POSTs raw PNG bytes with an
-`X-Filename` header and uses the returned URL.
+**The Instagram caveat, plainly:** Meta requires a *publicly reachable* image
+URL, and there is no image library in this repo to serve one. So paste a URL
+into the post's **Edit → Artwork → Public image URL** field — anything already
+on the public web works (your site's `/media`, a Cloudflare R2 or S3 bucket, an
+image CDN). Without it, Instagram stays in copy mode and Facebook/LinkedIn still
+publish for real.
+
+If you have an uploader of your own, `POST /api/publish` with
+`to: ["host"]` sends raw bytes plus an `X-Filename` header to
+`IMAGE_HOST_ENDPOINT` and returns the public URL it replies with. That is an
+API-level option — the dashboard itself only ever needs the URL.
 
 `config.json` is git-ignored and never leaves your machine.
 
@@ -238,33 +225,14 @@ function, a presigned S3 POST): the dashboard POSTs raw PNG bytes with an
 ## The actual plan
 
 **Two posts a day, every day, on every platform. 20 minutes of commenting every
-day. Never pitch in a comment.** The full breakdown — funnel, platform roles,
-what won't work — is in [STRATEGY.md](STRATEGY.md). The weekly ritual: write the
-next batch of posts, open the dashboard, press **⚡ Plan this week**.
+day. Never pitch in a comment.** The full breakdown is in
+[STRATEGY.md](STRATEGY.md). The weekly ritual: write the next batch of posts,
+open the dashboard, press **⚡ Plan this week**.
 
 ---
 
 ## Requirements
 
-Node 18+ (zero dependencies) and Python 3 with Pillow (image renderer only).
-Captions and schedule need neither — `node tools/captions_parity.js` is plain Node.
-
-## Vercel deployment
-
-This repository is Vercel-ready: it has no build command, the dashboard is served
-from `/app/index.html`, and the API functions in `/api` provide configuration,
-publishing, persistence acknowledgement, and a deployment health check.
-
-1. Import this repository into the existing Vercel project and deploy the branch.
-2. Set these **Production** environment variables in Vercel (do not commit tokens):
-   `META_TOKEN`, `FB_PAGE_ID`, `FB_PAGE_TOKEN`, `IG_USER_ID`, `LI_ORG_URN`, and
-   `LI_TOKEN`. `META_GRAPH_VERSION` and `LINKEDIN_VERSION` are optional.
-3. Verify `https://your-domain.example/api/health` returns JSON with `ok: true`.
-4. Open the domain root. The dashboard loads its library and images from the same
-   origin, so it does not depend on localhost or a separate server.
-
-Vercel deployments intentionally use browser local storage for schedules and
-backups; Vercel functions cannot reliably write `content/schedule.json`. Use
-Settings → Backup to move schedules between browsers or deployments. Instagram
-publishing additionally requires a public HTTPS image URL; the deployed JPEG
-assets provide that URL automatically.
+Node 18+ and nothing else — zero dependencies. Python 3 is only needed if you
+compile a bulk library from `content/posts_*.py`, and
+`node tools/captions_parity.js` is plain Node.

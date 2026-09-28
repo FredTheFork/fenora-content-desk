@@ -6,11 +6,7 @@
   ],
   "headers": [
     {
-      "source": "/render/(jpg|png)/(.*)",
-      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
-    },
-    {
-      "source": "/(app|content|render)/(.*\\.(js|css|json))",
+      "source": "/(app|content|assets)/(.*\\.(js|css|json))",
       "headers": [{ "key": "Cache-Control", "value": "public, max-age=300, must-revalidate" }]
     },
     {

@@ -1,7 +1,8 @@
 # Fenora — the exposure plan
 
 A strategy for taking **fenora.pro** from zero to a feed that the UK window trade
-actually follows, and a 251-post library plus a scheduling tool to run it on.
+actually follows — and the empty scheduling desk to run it on. The desk ships with
+no posts: this document is the brief, you write the content.
 
 ---
 
@@ -32,9 +33,10 @@ realising it. Most accounts only do layer one and wonder why nothing converts.
 | **Buyers** | MDs, owners, ops managers, surveyors | **25%** | Creates the DM. The person with a budget who follows the trade accounts. |
 | **Product** | everyone, thinly | **5%** | Converts the buyer. Ten posts in three months is plenty. |
 
-This is why the library is 44% trade pain and 22% contrarian. That ratio is
-deliberate. A feed that is 60% product will never build an audience, and a feed with
-0% product will never make a sale.
+This is why the pillar mix aims for roughly 44% trade pain and 22% contrarian. That
+ratio is deliberate — set it in **Settings → Pillar mix** and the planner will hold
+it. A feed that is 60% product will never build an audience, and a feed with 0%
+product will never make a sale.
 
 ### The number that decides everything
 
@@ -128,34 +130,40 @@ some facilities and developers. That is not vanity — one LinkedIn DM from a
 
 LinkedIn rewards long-form and punishes engagement-bait. The same joke that wins on
 Instagram will get 12 likes and zero DMs on LinkedIn. So: **argument first, anecdote
-second.** The five LinkedIn-first long-form posts in the library are the template.
+second.** Write a handful of LinkedIn-first long-form posts — a real argument, three
+short paragraphs, no hashtags — and use them as the template for the rest.
 
 ---
 
 ## 5. The image problem, and why you mostly don't have one
 
-You asked for image generator prompts. Every one of the 251 posts has a finished
-prompt in the Composer, house style already appended (the style suffix is what makes
-20 separately-generated images look like one campaign — always generate with it).
+There is no image pipeline in this repo, and that is deliberate. Artwork is yours to
+make — shoot it on site, design it, or generate it — and the desk keeps an **image
+brief** field per post plus the public URL Instagram needs to publish it.
 
-But be honest about the economics: generating 251 images will take weeks and look
-generic. The trade responds to **relatable and funny**, and text does that faster
-than photography.
+Be honest about the economics: generating an image for every post takes weeks and
+looks generic. The trade responds to **relatable and funny**, and text does that
+faster than photography.
 
-**So the primary visual is the caption card** — built into the dashboard. Four
-layouts, three aspect ratios (1:1, 4:5, 9:16), instant PNG, your brand colours.
-Roughly half the library is written specifically to land as a bold text card:
+**So the primary visual should be the caption card** — the hook, big, on a dark
+background in the brand colours. Write for it: short hook, no dependent clause, and
+it has to work at thumbnail size.
 
 > **28% of a standard UK casement is not glass.**
 > **The cheapest quote is the job missing its most expensive part.**
 > **A keystone is two seconds of work and the whole job.**
 
-That's 125 ready-to-post images you can produce in an afternoon. Use the AI
-photography prompts for the ones that genuinely need a photo — the reveal, the dog,
-the cavity full of foam. Roughly 80 of them.
+Aim for roughly half your posts to land that way. Save real photography for the ones
+where a picture genuinely beats text — the reveal, the dog, the cavity full of foam.
 
-**Batch tip:** generate 20 prompts in one sitting, keep the style suffix, and the grid
-looks like a campaign rather than a ransom note.
+Five house styles are kept in `content/tags.json` (`styles`) for exactly that: a
+photoreal editorial look, a candid trades-at-work look, a broadsheet-cartoon
+illustration, a product screen mock and a plain typographic card background. Append
+one to every brief you generate from — the style suffix is what makes twenty
+separately-generated images look like one campaign rather than a ransom note.
+
+**Batch tip:** make a week of artwork in one sitting, same style suffix, same
+colours. Then paste the public URLs into the posts and schedule the lot.
 
 ---
 
@@ -243,16 +251,20 @@ closes this sale every single time.
 ## 10. Where the files are
 
 ```
-fenora-marketing/
+fenora-content-desk/
 ├── STRATEGY.md              ← this
 ├── README.md                ← how to run the tool
 ├── server.js                ← local server + platform publishing
 ├── config.example.json      ← copy to config.json and add your tokens
 ├── app/                     ← the Content Desk (index.html, app.js, styles.css)
 └── content/
-    ├── posts_a–d.py         ← the library, written as Python
-    ├── build.py             ← compiles to posts.json + posts.csv
-    ├── posts.json           ← 251 posts, all three platform captions pre-built
-    ├── posts.csv            ← same, for spreadsheets
-    └── schedule.json        ← your dates (created on first save)
+    ├── build.py             ← compiles posts_*.py → posts.json + posts.csv
+    ├── posts.json           ← the frame: pillars, tagsets, banner + 0 posts
+    ├── tags.json            ← hashtag sets, discovery tags, house image styles
+    ├── posts_*.py           ← optional: bulk content, one file per pillar group
+    └── schedule.json        ← your dates, ticks and posts (created on first save)
 ```
+
+Posts you write in the dashboard live in the browser and in `schedule.json` —
+they never need `build.py`. Use the Python part files only when you have a pile
+of copy to import at once.

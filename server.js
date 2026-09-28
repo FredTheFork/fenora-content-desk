@@ -2,7 +2,7 @@
 /**
  * Fenora Content Desk — local server. Zero dependencies.
  *   • serves the dashboard
- *   • saves the schedule to content/schedule.json
+ *   • saves your schedule and the posts you write to content/schedule.json
  *   • proxies real publish calls to Instagram / Facebook / LinkedIn
  *
  * Run:  node server.js        →  http://localhost:4321
@@ -38,16 +38,6 @@ function readBody(req) {
     req.on('end', () => { try { resolve(d ? JSON.parse(d) : {}); } catch (e) { reject(e); } });
     req.on('error', reject);
   });
-}
-
-/* Live inventory of rendered images — the static file render/images.json
-   serves the same shape when this app is deployed to Vercel. */
-function imageInventory() {
-  const list = (dir, ext) => { try { return fs.readdirSync(dir).filter(f => f.endsWith(ext)).sort(); } catch { return []; } };
-  return {
-    png: list(path.join(ROOT, 'render', 'png'), '.png'),
-    jpg: list(path.join(ROOT, 'render', 'jpg'), '.jpg'),
-  };
 }
 
 /* ── API ─────────────────────────────────────────────────────────────────── */
@@ -105,17 +95,29 @@ async function api(req, res, pathname) {
 
   if (pathname === '/api/save' && req.method === 'POST') {
     const body = await readBody(req);
-    fs.writeFileSync(path.join(ROOT, 'content', 'schedule.json'), JSON.stringify(body, null, 1));
-    return json(res, 200, { ok: true, persistent: true, saved: body.posts?.length ?? Object.keys(body).length });
+    // Your state: the schedule (dates, ticks, caption overrides) plus every
+    // post written in the dashboard. Git-ignored — it is yours, not content.
+    const doc = {
+      posts: body.posts && typeof body.posts === 'object' ? body.posts : {},
+      custom: Array.isArray(body.custom) ? body.custom : [],
+      saved: body.saved || new Date().toISOString(),
+    };
+    fs.writeFileSync(path.join(ROOT, 'content', 'schedule.json'), JSON.stringify(doc, null, 1));
+    return json(res, 200, {
+      ok: true, persistent: true,
+      saved: Object.keys(doc.posts).length, posts: doc.custom.length,
+    });
   }
 
   if (pathname === '/api/load') {
     const p = path.join(ROOT, 'content', 'schedule.json');
-    return json(res, 200, fs.existsSync(p) ? JSON.parse(fs.readFileSync(p, 'utf8')) : { posts: {} });
-  }
-
-  if (pathname === '/api/images') {
-    return json(res, 200, imageInventory());
+    if (!fs.existsSync(p)) return json(res, 200, { posts: {}, custom: [], persistent: true });
+    try {
+      const d = JSON.parse(fs.readFileSync(p, 'utf8'));
+      return json(res, 200, { posts: d.posts || {}, custom: d.custom || [], saved: d.saved || '', persistent: true });
+    } catch (e) {
+      return json(res, 200, { posts: {}, custom: [], persistent: true, error: e.message });
+    }
   }
 
   return json(res, 404, { error: 'unknown endpoint' });
@@ -129,11 +131,6 @@ const server = http.createServer(async (req, res) => {
   if (pathname.startsWith('/api/')) {
     try { return await api(req, res, pathname); }
     catch (e) { return json(res, 500, { error: e.message }); }
-  }
-
-  // Live image inventory, same URL and shape as the static file on Vercel.
-  if (pathname === '/render/images.json') {
-    return json(res, 200, imageInventory());
   }
 
   // The dashboard is the product — serve it at / as well as /app/.
