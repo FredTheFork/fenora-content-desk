@@ -38,6 +38,7 @@
       <p class="lede" id="t-sum"></p>
     </div>
     <div class="grow"></div>
+    <button class="btn" id="t-new" hidden>＋ New post</button>
     <button class="btn ghost" id="t-plan">⚡ Plan this week</button>
   </div>
   <div class="daystrip" id="t-strip"></div>
@@ -63,7 +64,7 @@
 <!-- ════════════════════ LIBRARY ════════════════════ -->
 <section class="tab" id="tab-library">
   <div class="toolbar">
-    <input id="q" type="search" placeholder="Search 251 posts — reveal, sash, planning, margin…" autocomplete="off">
+    <input id="q" type="search" placeholder="Search your posts — hook, caption or ID…" autocomplete="off">
     <div class="selects">
       <select id="f-pillar"><option value="">All pillars</option></select>
       <select id="f-format"><option value="">All formats</option></select>
@@ -75,6 +76,7 @@
       </select>
     </div>
     <span class="count" id="lib-count"></span>
+    <button class="btn sm" id="lib-newpost">＋ New post</button>
   </div>
   <div class="lib" id="lib"></div>
 </section>
@@ -131,19 +133,19 @@
   <div class="drawer-panel">
     <header class="drawer-head">
       <span class="mono pill id" id="c-id">—</span>
-      <span class="pill" id="c-pillar">—</span>
-      <span class="pill" id="c-format">—</span>
+      <span class="pill" id="c-kind">—</span>
       <div class="grow"></div>
       <button class="icon-btn" data-close aria-label="Close">✕</button>
     </header>
     <div class="drawer-body">
-      <div class="col-img">
-        <img id="c-image" alt="">
-        <div class="img-empty" id="c-img-empty" hidden>No image rendered yet</div>
-        <div class="img-bar">
-          <select id="c-size" class="mini"><option value="4x5">4:5 feed</option><option value="9x16">9:16 reel</option></select>
-          <a class="btn ghost sm" id="c-dl" download>Download</a>
-          <a class="btn ghost sm" id="c-open" target="_blank" rel="noopener">Open full size</a>
+      <div class="col-side">
+        <div class="fgroup"><label>Pillar</label>
+          <select id="c-pillar-sel" class="mini"></select>
+        </div>
+        <div class="fgroup"><label>Format</label>
+          <select id="c-format-sel" class="mini"></select>
+          <p class="muted small" id="lib-note" style="margin-top:6px">Library posts are compiled from
+            <code>content/posts_*.py</code> — pillar and format are set there. Posts you write here are fully editable.</p>
         </div>
         <div class="fgroup"><label>Schedule</label>
           <div class="row gap">
@@ -153,18 +155,21 @@
         </div>
         <div class="fgroup"><label>Post to</label><div class="chips" id="c-platforms"></div></div>
         <details class="adv">
-          <summary>Advanced</summary>
-          <div class="fgroup"><label>Image generator prompt <span class="muted">(if you'd rather generate your own)</span></label>
+          <summary>Artwork</summary>
+          <div class="fgroup"><label>Image brief <span class="muted">(hand this to a designer or an image generator)</span></label>
             <textarea id="c-prompt" rows="4" class="mono small"></textarea>
-            <button class="btn ghost sm" id="c-copy-prompt">Copy prompt</button>
+            <button class="btn ghost sm" id="c-copy-prompt">Copy brief</button>
           </div>
-          <div class="fgroup"><label>Public image URL <span class="muted">(only needed for auto-posting to Instagram)</span></label>
+          <div class="fgroup"><label>Public image URL <span class="muted">(required to auto-post to Instagram)</span></label>
             <input id="c-imgurl" type="url" placeholder="https://…">
           </div>
         </details>
+        <div class="fgroup danger" id="c-danger" hidden>
+          <button class="btn ghost sm" id="c-delete">Delete this post</button>
+        </div>
       </div>
       <div class="col-txt">
-        <div class="fgroup"><label>Hook <span class="muted">— the big text on the image</span></label>
+        <div class="fgroup"><label>Hook <span class="muted">— the first line people read</span></label>
           <textarea id="c-hook" rows="2"></textarea></div>
         <div class="fgroup"><label>Caption</label><textarea id="c-body" rows="10"></textarea></div>
         <div class="fgroup"><label>CTA <span class="muted">(optional closing line)</span></label>
@@ -205,8 +210,10 @@
           <h2 class="mt">Schedule</h2>
           <div class="row gap wrap">
             <button class="btn" id="s-resched">Rebuild the whole schedule</button>
+            <button class="btn ghost danger" id="s-clear">Clear the whole desk</button>
           </div>
-          <p class="muted small" style="margin-top:8px">Clears every planned post (never touches posted ones) and re-plans the next 90 days.</p>
+          <p class="muted small" style="margin-top:8px"><b>Rebuild</b> clears every planned post (never touches posted ones) and re-plans the next 90 days.
+            <b>Clear</b> empties the desk completely — every date, tick and post you wrote here.</p>
 
           <h2 class="mt">Export</h2>
           <p class="muted small">Column names Buffer, Later, Metricool and Hootsuite all read these directly.</p>
@@ -214,7 +221,7 @@
             <button class="btn ghost sm" data-csv="buffer">Buffer / Later</button>
             <button class="btn ghost sm" data-csv="metricool">Metricool</button>
             <button class="btn ghost sm" data-csv="hootsuite">Hootsuite</button>
-            <button class="btn ghost sm" data-csv="full">Full library + prompts</button>
+            <button class="btn ghost sm" data-csv="full">Full library + captions</button>
           </div>
 
           <h2 class="mt">Backup</h2>
@@ -230,7 +237,7 @@
           <h2>Posting to</h2>
           <div id="conn-status" class="conn"></div>
           <form id="conn-form" onsubmit="return false">
-            <p class="muted small">Without these, everything still works in <b>copy mode</b> — one click puts the right caption on your clipboard and the image in your downloads.</p>
+            <p class="muted small">Without these, everything still works in <b>copy mode</b> — one click puts the right caption for that platform on your clipboard.</p>
             <div class="fgroup"><label>Instagram Business account ID</label><input id="s-iguser" placeholder="1784140…" autocomplete="off"></div>
             <div class="fgroup"><label>Meta access token <span class="muted">(instagram_content_publish + pages_manage_posts)</span></label><input id="s-mtoken" type="password" placeholder="EAAG…" autocomplete="off"></div>
             <div class="fgroup"><label>Facebook Page ID</label><input id="s-pageid" placeholder="10223…" autocomplete="off"></div>
@@ -239,7 +246,6 @@
             <div class="fgroup"><label>LinkedIn access token <span class="muted">(w_organization_social)</span></label><input id="s-litoken" type="password" placeholder="AQV…" autocomplete="off"></div>
             <div class="row gap"><button class="btn" type="button" id="s-save">Save</button></div>
             <p class="muted small">Tokens are written to <code>config.json</code> on your machine. Git-ignored, never sent anywhere but Meta and LinkedIn.</p>
-            <div class="fgroup" style="margin-top:14px"><label>Image host endpoint <span class="muted">(optional — for Instagram auto-post from a laptop)</span></label><input id="s-host" placeholder="https://…/upload"></div>
           </form>
           <div id="conn-env" class="notice" hidden>
             <b>Running on Vercel.</b> Tokens live in your project's
@@ -255,12 +261,6 @@
       </div>
     </div>
   </div>
-</div>
-
-<!-- ════════════════════ LIGHTBOX ════════════════════ -->
-<div class="lightbox" id="lightbox" hidden>
-  <div class="drawer-scrim" data-lb-close></div>
-  <img id="lb-img" alt="">
 </div>
 
 <div class="toast" id="toast"></div>

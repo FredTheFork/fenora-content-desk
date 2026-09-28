@@ -1,8 +1,20 @@
 /* Fenora Content Desk — app logic.
  *
- * The whole product in one sentence: this is the content, click to post.
+ * The whole product in one sentence: write it once, click to post.
  * Everything on the Today screen exists to make that one flow effortless;
  * the Calendar, Library and Settings exist to prepare it.
+ *
+ * The desk ships EMPTY. content/posts.json holds the frame — pillars,
+ * hashtag sets, the caption banner — and no posts. You add content either
+ * here (Library → + New post) or in bulk from a content/posts_*.py part
+ * file. Nothing is scheduled until you schedule it.
+ *
+ * Two kinds of post:
+ *   library posts  — compiled from content/posts_*.py, read-only here;
+ *   your posts     — written in the dashboard, kept in S.custom.
+ * Both take their edits (hook, body, date, ticks) from the same schedule
+ * object, so the composer, planner and publishers never need to tell them
+ * apart.
  *
  * State lives in the browser (localStorage) and is mirrored to
  * content/schedule.json when the local server is running. Boot reads it
@@ -42,14 +54,11 @@ const copy = async (txt, msg) => {
   }
 };
 
-const downloadFile = (url, name) => {
-  const a = document.createElement('a');
-  a.href = url; a.download = name;
-  document.body.appendChild(a); a.click(); a.remove();
-};
-
 /* ══════════════ state ══════════════ */
-const LS     = 'fenora.desk.v2';      // the schedule
+/* v3: the pre-written library was scrapped, so the schedule starts from a
+   genuinely blank slate rather than inheriting 251 stale entries. */
+const LS     = 'fenora.desk.v3';      // the schedule
+const LCUS   = 'fenora.posts.v1';     // posts written in the dashboard
 const LSET   = 'fenora.settings.v1';  // cadence + pillar mix
 
 const DEFAULT_SETTINGS = {
@@ -61,10 +70,9 @@ const DEFAULT_SETTINGS = {
 const S = {
   lib: { pillars: [], tagsets: {}, discovery: [], posts: [] },
   posts: [],
+  custom: [],            // posts written in the dashboard
   sched: {},
   settings: JSON.parse(JSON.stringify(DEFAULT_SETTINGS)),
-  images: new Set(), jpgs: new Set(),
-  savedImgs: new Set(),
   cfg: { configured: {}, defaults: {}, persistent: true },
   filters: { q:'', pillar:'', format:'', status:'' },
   day: 0,                    // selected index in the 7-day strip
@@ -72,6 +80,8 @@ const S = {
 };
 
 const find = id => S.posts.find(x => x.id === id);
+const isCustom = id => S.custom.some(x => x.id === id);
+const pillarLabel = k => (S.lib.pillars.find(p => p.key === k) || {}).label || k;
 const sched = id => S.sched[id] || (S.sched[id] = { date:'', time:'', posted:{}, caps:{} });
 const platsOf = (p, s) => (s.platforms && s.platforms.length ? s.platforms
   : String(p.platforms || 'IG').split(',').map(x => x.trim()).filter(Boolean));
@@ -88,11 +98,14 @@ function save() {
   clearTimeout(saveT);
   saveState('Saving…', 'saving');
   saveT = setTimeout(() => {
-    try { localStorage.setItem(LS, JSON.stringify(S.sched)); } catch {}
+    try {
+      localStorage.setItem(LS, JSON.stringify(S.sched));
+      localStorage.setItem(LCUS, JSON.stringify(S.custom));
+    } catch {}
     saveState('Saved ✓', 'saved');
     fetch('/api/save', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ posts: S.sched, saved: new Date().toISOString() }),
+      body: JSON.stringify({ posts: S.sched, custom: S.custom, saved: new Date().toISOString() }),
     }).then(r => r.ok ? r.json() : null)
       .then(j => saveState(j && j.persistent === false ? 'Saved on this device ✓' : 'Saved ✓', 'saved'))
       .catch(() => saveState('Saved on this device ✓', 'saved'));
@@ -114,6 +127,7 @@ function migrate() {
       platsOf(p, s).forEach(k => s.posted[k] = true);
     }
   }
+  pruneOrphans();
   const raw = localStorage.getItem(LSET);
   if (raw) {
     try {
@@ -123,6 +137,18 @@ function migrate() {
     } catch {}
   }
   if (!S.settings.times.length) S.settings.times = ['08:00', '18:30'];
+}
+
+/* Drop schedule entries for posts that no longer exist — a scrapped library,
+   a deleted post, a backup from another machine. Without this the calendar
+   would keep counting ghosts as "scheduled". */
+function pruneOrphans() {
+  const known = new Set(S.posts.map(p => p.id));
+  let n = 0;
+  for (const id of Object.keys(S.sched)) {
+    if (!known.has(id)) { delete S.sched[id]; n++; }
+  }
+  return n;
 }
 
 /* ══════════════ captions ══════════════ */
@@ -148,45 +174,29 @@ function captionFor(p, s, plat) {
   } catch { return p['caption_' + plat.toLowerCase()] || ''; }
 }
 
-/* ══════════════ images ══════════════ */
-const aspectOf = p => (p.format === 'reel' || p.format === 'story') ? '9x16' : '4x5';
-function imgURL(id, size) {
-  const s = size || '4x5';
-  if (S.jpgs.has(`${id}_${s}.jpg`)) return `/render/jpg/${id}_${s}.jpg`;
-  if (S.images.has(`${id}_${s}.png`)) return `/render/png/${id}_${s}.png`;
-  return null;
-}
-const dlURL = imgURL;
-function imgName(p, size) {
-  const url = imgURL(p.id, size || aspectOf(p));
-  return url ? url.split('/').pop() : `${p.id}_${size || aspectOf(p)}.png`;
-}
-const isPublicHost = () => !/^(localhost|127\.|192\.168\.|10\.)/.test(location.hostname) && !/\.local$/.test(location.hostname);
-function publicImgURL(id, size) {
-  const u = imgURL(id, size);
-  return u ? location.origin + u : null;
-}
-
 /* ══════════════ boot ══════════════ */
 (async function boot() {
   try {
     S.lib = await (await fetch('/content/posts.json')).json();
-    S.posts = S.lib.posts;
+    S.posts = S.lib.posts || [];
   } catch {
     document.body.innerHTML = '<div class="empty" style="margin:80px auto;max-width:480px"><h2>Could not load the content library</h2><p>Make sure <code>content/posts.json</code> exists — run <code>cd content &amp;&amp; python3 build.py</code>.</p></div>';
     return;
   }
+  let server = {};
   try {
     const r = await fetch('/api/load');
-    if (r.ok) S.sched = (await r.json()).posts || {};
+    if (r.ok) server = await r.json();
   } catch {}
-  try { S.sched = { ...S.sched, ...JSON.parse(localStorage.getItem(LS) || '{}') }; } catch {}
+  S.sched = { ...(server.posts || {}), ...readLS(LS, {}) };
+  /* Posts written in the dashboard. The browser copy wins — on Vercel it is
+     the only copy there is. */
+  const byId = new Map((server.custom || []).map(p => [p.id, p]));
+  readLS(LCUS, []).forEach(p => byId.set(p.id, p));
+  S.custom = [...byId.values()].filter(p => p && p.id);
+  S.custom.forEach(p => { p.custom = true; if (!find(p.id)) S.posts.push(p); });
+
   migrate();
-  try {
-    const im = await (await fetch('/render/images.json')).json();
-    (im.png || []).forEach(f => S.images.add(f));
-    (im.jpg || []).forEach(f => S.jpgs.add(f));
-  } catch {}
 
   $('#f-pillar').innerHTML = '<option value="">All pillars</option>' +
     S.lib.pillars.map(p => `<option value="${p.key}">${esc(p.label)}</option>`).join('');
@@ -197,6 +207,10 @@ function publicImgURL(id, size) {
   loadCfg();
   renderAll();
 })();
+
+function readLS(key, fallback) {
+  try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; }
+}
 
 function renderAll() { renderToday(); drawCal(); renderLib(); }
 
@@ -346,50 +360,58 @@ function renderToday() {
   const dayPosts = postsOn(ds);
   const done = dayPosts.filter(isFullyPosted).length;
   const st = streak();
+  $('#t-plan').hidden = !S.posts.length;
+  $('#t-new').hidden = Boolean(S.posts.length);
   $('#t-date').textContent = S.day === 0
     ? `Today — ${d.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}`
     : d.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
-  $('#t-sum').innerHTML = dayPosts.length
+  $('#t-sum').innerHTML = !S.posts.length
+    ? 'The desk is empty — nothing written, nothing scheduled.'
+    : dayPosts.length
     ? `${dayPosts.length} post${dayPosts.length > 1 ? 's' : ''} · ${done} done${done === dayPosts.length && dayPosts.length ? ' · all green ✓' : ''}` +
       (st > 1 ? ` · <span title="consecutive days with everything posted">🔥 ${st}-day streak</span>` : '')
     : `Nothing planned for this day yet.`;
 
   $('#t-posts').innerHTML = dayPosts.length
     ? dayPosts.map(p => todayCard(p)).join('')
-    : `<div class="empty">
+    : S.posts.length
+    ? `<div class="empty">
          <h2>Nothing planned for ${S.day === 0 ? 'today' : d.toLocaleDateString('en-GB', { weekday: 'long' })}</h2>
          <p>Press <b>⚡ Plan this week</b> and the next seven days are ready to post.</p>
          <button class="btn" data-plan>⚡ Plan this week</button>
+       </div>`
+    : `<div class="empty">
+         <h2>Nothing here yet</h2>
+         <p>The desk ships empty. Write your first post, schedule it, then copy the
+            caption or publish it straight to Instagram, Facebook and LinkedIn.</p>
+         <button class="btn" data-new>＋ New post</button>
+         <p class="muted small" style="margin-top:14px">Got a pile of copy already? Drop it in
+            <code>content/posts_*.py</code> and run <code>python3 build.py</code> to import it in bulk.</p>
        </div>`;
 }
 
 function todayCard(p) {
   const s = sched(p.id);
-  const im = imgURL(p.id, aspectOf(p));
   const plats = platsOf(p, s);
   const allDone = isFullyPosted(p);
   const slot = (s.time || '').slice(0, 5);
 
   return `<article class="tpost${allDone ? ' all-done' : ''}" data-id="${p.id}">
-    <div class="tp-img" data-lb="${p.id}" title="Click to enlarge">
-      ${im ? `<img src="${im}" alt="">`
-           : `<div class="ph">${esc(field(p, s, 'hook'))}</div>`}
-    </div>
     <div class="tp-body">
       <div class="tp-meta">
         ${slot ? `<span class="pill slot-pill">${slot}</span>` : ''}
-        <span class="pill">${esc(p.pillar_label)}</span>
+        <span class="pill">${esc(p.pillar_label || pillarLabel(p.pillar))}</span>
         <span class="pill">${PFMT[p.format] || esc(p.format)}</span>
         <span class="pill id">${esc(p.id)}</span>
       </div>
-      <h2>${esc(field(p, s, 'hook'))}</h2>
+      <h2>${esc(field(p, s, 'hook')) || '<span class="muted">No hook yet — open it and write one</span>'}</h2>
       <div class="tp-rows">
         ${plats.map(k => {
           const posted = isPosted(p, s, k);
           const canApi = S.cfg.configured && S.cfg.configured[k === 'IG' ? 'instagram' : k === 'FB' ? 'facebook' : 'linkedin'];
           return `<div class="pt-row${posted ? ' done' : ''}">
             <span class="pt-name"><i class="dot ${k}"></i>${PLAT_LABEL[k] || k}</span>
-            <button class="btn sm${posted ? ' ghost' : ''}" data-copy="${k}">📋 Copy caption &amp; save image</button>
+            <button class="btn sm${posted ? ' ghost' : ''}" data-copy="${k}">📋 Copy caption</button>
             ${canApi ? `<button class="btn ghost sm" data-now="${k}">Post now</button>` : ''}
             <a class="btn ghost sm" href="${k === 'IG' ? 'https://www.instagram.com/' : k === 'FB' ? 'https://www.facebook.com/' : 'https://www.linkedin.com/feed/'}" target="_blank" rel="noopener">Open ${PLAT_LABEL[k] || k}</a>
             <button class="pt-check${posted ? ' on' : ''}" data-post="${k}">${posted ? '✓ Posted' : 'Posted?'}</button>
@@ -402,7 +424,6 @@ function todayCard(p) {
           <pre>${esc(captionFor(p, s, k))}</pre>`).join('')}
       </details>
       <div class="tp-foot">
-        ${im ? `<a class="btn ghost sm" href="${im}" download="${esc(imgName(p))}">Download image</a>` : ''}
         <button class="btn ghost sm" data-edit="${p.id}">Edit</button>
         <button class="btn ghost sm" data-unplan="${p.id}">Unplan</button>
       </div>
@@ -410,26 +431,11 @@ function todayCard(p) {
   </article>`;
 }
 
-/* one click = caption on the clipboard + image in Downloads */
-async function copyAndSave(id, plat) {
+/* one click = the right caption for that platform on the clipboard */
+async function copyCaption(id, plat) {
   const p = find(id), s = sched(id);
   if (!p) return;
-  const text = captionFor(p, s, plat);
-  const im = dlURL(p.id, aspectOf(p));
-  let msg;
-  if (im) {
-    const key = id + aspectOf(p);
-    if (!S.savedImgs.has(key)) {
-      downloadFile(im, imgName(p));
-      S.savedImgs.add(key);
-      msg = `${PLAT_LABEL[plat]} caption copied & image saved — now paste it in`;
-    } else {
-      msg = `${PLAT_LABEL[plat]} caption copied ✓ (image already saved)`;
-    }
-  } else {
-    msg = `${PLAT_LABEL[plat]} caption copied ✓ (no image rendered yet — run the renderer)`;
-  }
-  await copy(text, msg);
+  await copy(captionFor(p, s, plat), `${PLAT_LABEL[plat]} caption copied ✓`);
 }
 
 function togglePosted(id, plat) {
@@ -448,9 +454,10 @@ $('#t-strip').onclick = e => {
   if (b) { S.day = +b.dataset.d; renderToday(); }
 };
 $('#t-plan').onclick = () => planAndReport(7);
+$('#t-new').onclick = () => newPost();
 $('#t-posts').addEventListener('click', e => {
   const copyBtn = e.target.closest('[data-copy]');
-  if (copyBtn) return copyAndSave(copyBtn.closest('.tpost').dataset.id, copyBtn.dataset.copy);
+  if (copyBtn) return copyCaption(copyBtn.closest('.tpost').dataset.id, copyBtn.dataset.copy);
   const postBtn = e.target.closest('[data-post]');
   if (postBtn) return togglePosted(postBtn.closest('.tpost').dataset.id, postBtn.dataset.post);
   const now = e.target.closest('[data-now]');
@@ -459,12 +466,16 @@ $('#t-posts').addEventListener('click', e => {
   if (ed) return openPost(ed.dataset.edit);
   const up = e.target.closest('[data-unplan]');
   if (up) return unplan(up.dataset.unplan);
-  const lb = e.target.closest('[data-lb]');
-  if (lb) return lightbox(lb.dataset.lb);
   if (e.target.closest('[data-plan]')) return planAndReport(7);
+  if (e.target.closest('[data-new]')) return newPost();
 });
 
 function planAndReport(n) {
+  if (!S.posts.length) {
+    toast('The library is empty — write your first post', 'err');
+    tab('library');
+    return 0;
+  }
   const placed = planDays(n);
   if (placed) {
     S.day = 0;
@@ -473,18 +484,8 @@ function planAndReport(n) {
   } else {
     toast('Nothing left in the library to plan', 'err');
   }
+  return placed;
 }
-
-/* ══════════════ lightbox ══════════════ */
-function lightbox(id) {
-  const url = imgURL(id, aspectOf(find(id) || {}));
-  if (!url) return;
-  $('#lb-img').src = url;
-  $('#lightbox').hidden = false;
-}
-$('#lightbox').addEventListener('click', e => {
-  if (e.target.closest('[data-lb-close]') || e.target.id === 'lb-img') $('#lightbox').hidden = true;
-});
 
 /* ══════════════ CALENDAR ══════════════ */
 $('#cal-prev').onclick = () => { S.calM--; if (S.calM < 0) { S.calM = 11; S.calY--; } drawCal(); };
@@ -547,6 +548,7 @@ $('#q').oninput = e => { S.filters.q = e.target.value; renderLib(); };
 $('#f-pillar').onchange = e => { S.filters.pillar = e.target.value; renderLib(); };
 $('#f-format').onchange = e => { S.filters.format = e.target.value; renderLib(); };
 $('#f-status').onchange = e => { S.filters.status = e.target.value; renderLib(); };
+$('#lib-newpost').onclick = () => newPost();
 
 function renderLib() {
   const f = S.filters, q = f.q.toLowerCase();
@@ -557,22 +559,76 @@ function renderLib() {
     if (q && !(field(p, sched(p.id), 'hook') + ' ' + field(p, sched(p.id), 'body') + ' ' + p.id).toLowerCase().includes(q)) return false;
     return true;
   });
-  $('#lib-count').textContent = `${list.length} of ${S.posts.length} posts`;
+  $('#lib-count').textContent = S.posts.length
+    ? `${list.length} of ${S.posts.length} post${S.posts.length > 1 ? 's' : ''}`
+    : 'Empty desk';
   $('#lib').innerHTML = list.map(p => {
-    const s = sched(p.id), st = stOf(p), im = imgURL(p.id);
+    const s = sched(p.id), st = stOf(p);
+    const hook = field(p, s, 'hook');
     return `<article class="pcard" data-id="${p.id}" draggable="true" tabindex="0">
       <div class="thumb">
-        ${im ? `<img loading="lazy" src="${im}" alt="">` : `<div class="ph">${esc(field(p, s, 'hook'))}</div>`}
-        <div class="th-top"><span class="pill id">${esc(p.id)}</span></div>
-        <div class="th-over"><div class="k">${esc(field(p, s, 'hook'))}</div></div>
+        <div class="th-top"><span class="pill id">${esc(p.id)}</span>${isCustom(p.id) ? '<span class="pill mine">yours</span>' : ''}</div>
+        <div class="ph">${esc(hook) || '<span class="muted">Untitled post</span>'}</div>
       </div>
       <div class="foot">
+        <span class="pill">${esc(p.pillar_label || pillarLabel(p.pillar))}</span>
         <span class="pill">${PFMT[p.format] || esc(p.format)}</span>
         <span class="pill ${st}">${st === 'draft' ? 'unscheduled' : st === 'posted' ? 'posted' : esc(s.date.slice(5))}</span>
         <div class="dots">${platsOf(p, s).map(x => `<i class="${x}"></i>`).join('')}</div>
       </div>
     </article>`;
-  }).join('') || '<div class="empty">Nothing matches those filters.</div>';
+  }).join('') || (S.posts.length
+    ? '<div class="empty">Nothing matches those filters.</div>'
+    : `<div class="empty">
+         <h2>No posts yet</h2>
+         <p>Everything you write lives here — searchable, filterable, draggable onto the calendar.</p>
+         <button class="btn" id="lib-new">＋ New post</button>
+       </div>`);
+  const nb = $('#lib-new');
+  if (nb) nb.onclick = () => newPost();
+}
+
+/* ══════════════ writing posts ══════════════ */
+/* Posts written here are yours: they live in S.custom, are saved to
+   localStorage and mirrored into content/schedule.json, and can be edited or
+   deleted at any time. Library posts (content/posts.json) stay read-only —
+   they are compiled from Python and rebuilt from source. */
+function nextCustomId() {
+  const used = new Set(S.posts.map(p => p.id));
+  let n = S.custom.length + 1;
+  while (used.has(`C-${String(n).padStart(2, '0')}`)) n++;
+  return `C-${String(n).padStart(2, '0')}`;
+}
+
+function newPost() {
+  const pillar = (S.lib.pillars[0] || {}).key || 'trade-pain';
+  const p = {
+    id: nextCustomId(), pillar, pillar_label: pillarLabel(pillar),
+    format: 'static', series: '', hook: '', body: '', cta: '', cta_fb: '', li_lead: '',
+    image_prompt: '', image_style: '', aspect: '4:5',
+    platforms: 'IG,FB,LI', tagset: 'core', custom: true,
+  };
+  S.custom.push(p);
+  S.posts.push(p);
+  save();
+  renderAll();
+  openPost(p.id);
+  setTimeout(() => { const h = $('#c-hook'); if (h) h.focus(); }, 60);
+  toast('New post — write the hook, then give it a date', 'ok');
+}
+
+function deletePost(id) {
+  if (!isCustom(id)) return;
+  const p = find(id);
+  if (!confirm(`Delete ${id}${p && field(p, sched(id), 'hook') ? ' — “' + field(p, sched(id), 'hook').slice(0, 60) + '”' : ''}?\n\nThis cannot be undone.`)) return;
+  S.custom = S.custom.filter(x => x.id !== id);
+  S.posts = S.posts.filter(x => x.id !== id);
+  S.lib.posts = S.posts.filter(x => !x.custom);
+  delete S.sched[id];
+  if (CUR === id) { CUR = null; $('#drawer').hidden = true; }
+  save();
+  renderAll();
+  toast(`${id} deleted`, 'ok');
 }
 
 $('#lib').addEventListener('click', e => {
@@ -594,14 +650,25 @@ function openPost(id) {
   const p = find(id); if (!p) return;
   CUR = id;
   const s = sched(id);
+  const mine = isCustom(id);
   $('#c-id').textContent = p.id;
-  $('#c-pillar').textContent = p.pillar_label;
-  $('#c-format').textContent = PFMT[p.format] || p.format;
+  $('#c-kind').textContent = mine ? 'your post' : 'library post';
+  $('#c-kind').className = 'pill' + (mine ? ' mine' : '');
+  $('#c-pillar-sel').innerHTML = S.lib.pillars.map(pl =>
+    `<option value="${pl.key}"${pl.key === p.pillar ? ' selected' : ''}>${esc(pl.label)}</option>`).join('');
+  const fmts = Object.entries(PFMT);
+  if (p.format && !fmts.some(([k]) => k === p.format)) fmts.push([p.format, p.format]);
+  $('#c-format-sel').innerHTML = fmts.map(([k, v]) =>
+    `<option value="${k}"${k === p.format ? ' selected' : ''}>${esc(v)}</option>`).join('');
+  $('#c-pillar-sel').disabled = !mine;
+  $('#c-format-sel').disabled = !mine;
+  $('#lib-note').hidden = mine;
+  $('#c-danger').hidden = !mine;
   $('#c-hook').value = field(p, s, 'hook');
   $('#c-body').value = field(p, s, 'body');
   $('#c-cta').value = field(p, s, 'cta');
   $('#c-lilead').value = s.liLead || p.li_lead || '';
-  $('#c-prompt').value = p.image_prompt || '';
+  $('#c-prompt').value = s.imgPrompt || p.image_prompt || '';
   $('#c-imgurl').value = s.imgurl || '';
   $('#c-time').value = s.time || S.settings.times[0] || '08:00';
   $('#c-platforms').innerHTML = ['IG','FB','LI'].map(k =>
@@ -609,28 +676,24 @@ function openPost(id) {
   capPlat = platsOf(p, s).includes(capPlat) ? capPlat : (platsOf(p, s)[0] || 'IG');
   $('#cap-tabs').innerHTML = ['IG','FB','LI'].map(k =>
     `<span class="chip${k === capPlat ? ' on' : ''}" data-c="${k}">${PLAT_LABEL[k]}</span>`).join('');
-  $('#c-size').value = aspectOf(p);
-  setImage();
   populateDates();
   showCap();
   $('#drawer').hidden = false;
 }
 
-function setImage() {
-  const p = find(CUR); if (!p) return;
-  const url = imgURL(p.id, $('#c-size').value);
-  const im = $('#c-image'), ph = $('#c-img-empty');
-  if (url) {
-    im.src = url; im.style.display = 'block'; ph.hidden = true;
-    $('#c-dl').href = url; $('#c-dl').setAttribute('download', imgName(p, $('#c-size').value));
-    $('#c-open').href = url;
-    $('#c-dl').style.display = ''; $('#c-open').style.display = '';
-  } else {
-    im.style.display = 'none'; ph.hidden = false;
-    $('#c-dl').style.display = 'none'; $('#c-open').style.display = 'none';
-  }
-}
-$('#c-size').onchange = setImage;
+/* Pillar and format belong to the post itself, so they are only editable on
+   posts you wrote here — library posts are compiled from content/posts_*.py. */
+$('#c-pillar-sel').onchange = e => {
+  const p = find(CUR); if (!p || !isCustom(p.id)) return;
+  p.pillar = e.target.value; p.pillar_label = pillarLabel(p.pillar);
+  save(); renderAll();
+};
+$('#c-format-sel').onchange = e => {
+  const p = find(CUR); if (!p || !isCustom(p.id)) return;
+  p.format = e.target.value;
+  save(); renderAll();
+};
+$('#c-delete').onclick = () => deletePost(CUR);
 
 $$('[data-close]').forEach(b => b.onclick = () => { $('#drawer').hidden = true; save(); renderAll(); });
 $$('[data-setup-close]').forEach(b => b.onclick = () => $('#setup').hidden = true);
@@ -672,7 +735,7 @@ $('#c-time').onchange = e => { sched(CUR).time = e.target.value; save(); renderA
 
 $('#drawer').addEventListener('input', e => {
   const s = sched(CUR), p = find(CUR); if (!s || !p) return;
-  const map = { 'c-hook':'hook', 'c-body':'body', 'c-cta':'cta', 'c-imgurl':'imgurl' };
+  const map = { 'c-hook':'hook', 'c-body':'body', 'c-cta':'cta', 'c-imgurl':'imgurl', 'c-prompt':'imgPrompt' };
   if (map[e.target.id]) {
     s[map[e.target.id]] = e.target.value;
     if (['c-hook','c-body','c-cta'].includes(e.target.id)) { s.caps = {}; showCap(); }
@@ -764,10 +827,9 @@ async function loadCfg() {
   try { S.cfg = await (await fetch('/api/config')).json(); } catch { S.cfg = { configured: {}, defaults: {}, persistent: true }; }
   const c = S.cfg.configured || {};
   $('#conn-status').innerHTML = [
-    ['Facebook Page', c.facebook, 'Posts go straight to your Page'],
-    ['Instagram',     c.instagram, 'Needs a public image URL (Vercel counts)'],
+    ['Facebook Page', c.facebook, 'Text and link posts go straight to your Page'],
+    ['Instagram',     c.instagram, 'Needs a public image URL on each post'],
     ['LinkedIn Page', c.linkedin,  'Text posts work anywhere'],
-    ['Image host',    c.imageHost, 'Optional — for Instagram from a laptop'],
   ].map(([n, ok, note]) => `<div class="crow"><div><b>${n}</b><div class="muted small">${note}</div></div>
     <span class="st ${ok ? 'ok' : 'no'}">${ok ? 'connected' : 'copy mode'}</span></div>`).join('');
 
@@ -787,8 +849,11 @@ $('#s-save').onclick = async () => {
       pageId: $('#s-pageid').value, pageToken: $('#s-ptoken').value,
     },
     linkedin: { orgUrn: $('#s-orgurn').value, liToken: $('#s-litoken').value },
-    imageHost: { uploadEndpoint: $('#s-host').value },
   };
+  /* The artwork host is an API-level option now — only sent if the field is
+     on screen, so an existing endpoint is never blanked by accident. */
+  const hostEl = $('#s-host');
+  if (hostEl) cfg.imageHost = { uploadEndpoint: hostEl.value };
   try {
     const r = await fetch('/api/config', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(cfg) });
     if (r.ok) {
@@ -817,9 +882,28 @@ const ce = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
 function exportCSV(kind) {
   const rows = S.posts.filter(p => sched(p.id).date);
   if (kind === 'full') {
-    if (!S.posts.length) return toast('Library is empty', 'err');
+    if (!S.posts.length) return toast('Library is empty — write a post first', 'err');
+    /* Effective values, not the raw library row: what you edited in the
+       composer (and everything you wrote here) is what gets exported. */
+    const eff = S.posts.map(p => {
+      const s = sched(p.id);
+      return {
+        id: p.id, pillar: p.pillar, pillar_label: p.pillar_label || pillarLabel(p.pillar),
+        format: p.format, series: p.series || '',
+        hook: field(p, s, 'hook'), body: field(p, s, 'body'),
+        cta: field(p, s, 'cta'), cta_fb: field(p, s, 'cta_fb') || field(p, s, 'cta'),
+        li_lead: s.liLead || p.li_lead || '',
+        image_prompt: s.imgPrompt || p.image_prompt || '',
+        image_style: p.image_style || '', aspect: p.aspect || '4:5',
+        platforms: platsOf(p, s).join(','), tagset: p.tagset || 'core',
+        caption_ig: captionFor(p, s, 'IG'), caption_fb: captionFor(p, s, 'FB'), caption_li: captionFor(p, s, 'LI'),
+        date: s.date || '', time: s.time || '', status: stOf(p),
+        ig_url: s.ig_url || '', fb_url: s.fb_url || '', li_url: s.li_url || '',
+        source: isCustom(p.id) ? 'dashboard' : 'library',
+      };
+    });
     dl('fenora-library.csv',
-      [Object.keys(S.posts[0]).map(ce).join(','), ...S.posts.map(p => Object.values(p).map(ce).join(','))].join('\n'));
+      [Object.keys(eff[0]).map(ce).join(','), ...eff.map(r => Object.values(r).map(ce).join(','))].join('\n'));
     return toast('Full library exported', 'ok');
   }
   const map = {
@@ -840,7 +924,7 @@ $$('[data-csv]').forEach(b => b.onclick = () => exportCSV(b.dataset.csv));
 
 $('#s-backup').onclick = () => {
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([JSON.stringify({ posts: S.sched, settings: S.settings }, null, 1)], { type: 'application/json' }));
+  a.href = URL.createObjectURL(new Blob([JSON.stringify({ posts: S.sched, custom: S.custom, settings: S.settings }, null, 1)], { type: 'application/json' }));
   a.download = 'fenora-schedule-backup.json'; a.click();
   toast('Backup downloaded', 'ok');
 };
@@ -850,6 +934,10 @@ $('#s-file').onchange = async e => {
   try {
     const data = JSON.parse(await f.text());
     S.sched = { ...S.sched, ...(data.posts || {}) };
+    const byId = new Map(S.custom.map(p => [p.id, p]));
+    (data.custom || []).forEach(p => { if (p && p.id) byId.set(p.id, { ...p, custom: true }); });
+    S.custom = [...byId.values()];
+    S.custom.forEach(p => { if (!find(p.id)) S.posts.push(p); });
     if (data.settings) {
       S.settings.times = data.settings.times || S.settings.times;
       S.settings.mix = { ...S.settings.mix, ...(data.settings.mix || {}) };
@@ -861,6 +949,22 @@ $('#s-file').onchange = async e => {
   e.target.value = '';
 };
 
+/* Back to a blank desk: every date, tick and caption override goes, and so
+   does anything you wrote here. The compiled library is left alone. */
+$('#s-clear').onclick = () => {
+  const n = Object.keys(S.sched).length, c = S.custom.length;
+  if (!n && !c) return toast('Already a blank desk', 'ok');
+  if (!confirm(`Clear everything?\n\n${n} schedule ${n === 1 ? 'entry' : 'entries'} and ${c} post${c === 1 ? '' : 's'} you wrote will be deleted.\nDownload a backup first if you might want any of it.`)) return;
+  S.sched = {};
+  S.custom = [];
+  S.posts = S.posts.filter(p => !p.custom);
+  S.lib.posts = S.posts;
+  CUR = null;
+  $('#drawer').hidden = true;
+  save(); renderAll();
+  toast('Desk cleared — nothing written, nothing scheduled', 'ok');
+};
+
 /* ══════════════ PUBLISH (optional API mode) ══════════════ */
 async function postNow(id, plat) {
   const p = find(id), s = sched(id);
@@ -869,10 +973,12 @@ async function postNow(id, plat) {
   const to = { IG:'ig', FB:'fb', LI:'li' }[plat];
   const body = { to: [to], caption, message: caption };
 
-  let img = s.imgurl || (isPublicHost() ? publicImgURL(p.id, aspectOf(p)) : null);
+  /* No renderer ships with the desk: Instagram needs a public image URL, so
+     paste one in the post's Advanced panel (or use copy mode). */
+  const img = s.imgurl || null;
   if (plat === 'IG') {
     if (!img) {
-      toast('Instagram needs a public image URL — use copy mode, or add one in Edit → Advanced', 'err');
+      toast('Instagram needs a public image URL — add one under Edit → Advanced, or use copy mode', 'err');
       return;
     }
     body.imageUrl = img;
@@ -945,14 +1051,13 @@ $('#eng-reset').onclick = () => { localStorage.removeItem(engKey); $('#eng-count
 /* ══════════════ keyboard ══════════════ */
 document.addEventListener('keydown', e => {
   if (e.key !== 'Escape') return;
-  if (!$('#lightbox').hidden) return void ($('#lightbox').hidden = true);
   if (!$('#drawer').hidden) return void ($('#drawer').hidden = true);
   if (!$('#setup').hidden) return void ($('#setup').hidden = true);
 });
 
 /* Keep a failed enhancement from leaving an invisible full-screen layer over the app. */
 window.addEventListener('error', e => {
-  ['drawer', 'setup', 'lightbox'].forEach(id => { const el = document.getElementById(id); if (el) el.hidden = true; });
+  ['drawer', 'setup'].forEach(id => { const el = document.getElementById(id); if (el) el.hidden = true; });
   const state = document.getElementById('save-state');
   if (state) { state.textContent = 'Something went wrong — reload'; state.className = 'err'; }
   console.error('Fenora UI error:', e.error || e.message);

@@ -6,11 +6,15 @@
   ],
   "headers": [
     {
-      "source": "/render/(jpg|png)/(.*)",
-      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+      "source": "/(app|content|assets)/(.*)\\.js",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=300, must-revalidate" }]
     },
     {
-      "source": "/(app|content|render)/(.*\\.(js|css|json))",
+      "source": "/(app|content|assets)/(.*)\\.css",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=300, must-revalidate" }]
+    },
+    {
+      "source": "/(app|content|assets)/(.*)\\.json",
       "headers": [{ "key": "Cache-Control", "value": "public, max-age=300, must-revalidate" }]
     },
     {

@@ -2,7 +2,7 @@
 config.json
 *.token
 
-# Your actual schedule and local state
+# Your schedule and the posts you write in the dashboard — local state, not content
 content/schedule.json
 .DS_Store
 
@@ -10,18 +10,6 @@ content/schedule.json
 node_modules/
 __pycache__/
 *.pyc
-
-# PNG masters are ~116MB and reproducible in ~10 minutes:
-#   cd render && python3 render.py && python3 tools/to_jpg.py
-# The JPEG set (render/jpg + render/images.json) IS committed so the Vercel
-# deployment has every image ready to post.
-render/png/
-
-# Download bundles, produced by build.sh
-fenora-images.zip
-
-# AI-generated hero photos (regenerate or replace freely)
-# assets/ai/*.png   (uncomment to exclude the AI hero photos)
 
 # Editor / OS
 .vscode/
