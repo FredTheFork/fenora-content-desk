@@ -950,4 +950,12 @@ document.addEventListener('keydown', e => {
   if (!$('#setup').hidden) return void ($('#setup').hidden = true);
 });
 
+/* Keep a failed enhancement from leaving an invisible full-screen layer over the app. */
+window.addEventListener('error', e => {
+  ['drawer', 'setup', 'lightbox'].forEach(id => { const el = document.getElementById(id); if (el) el.hidden = true; });
+  const state = document.getElementById('save-state');
+  if (state) { state.textContent = 'Something went wrong — reload'; state.className = 'err'; }
+  console.error('Fenora UI error:', e.error || e.message);
+});
+
 })();

@@ -48,6 +48,7 @@ code{font-family:var(--mono);font-size:11.5px;background:var(--bg3);padding:1px 
 #save-state{font-size:11.5px;color:var(--tx3);white-space:nowrap;transition:.2s}
 #save-state.saving{color:var(--acc)}
 #save-state.saved{color:var(--grn)}
+#save-state.err{color:var(--red)}
 
 /* ── buttons ── */
 .btn{

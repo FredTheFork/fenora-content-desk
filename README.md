@@ -248,3 +248,23 @@ next batch of posts, open the dashboard, press **⚡ Plan this week**.
 
 Node 18+ (zero dependencies) and Python 3 with Pillow (image renderer only).
 Captions and schedule need neither — `node tools/captions_parity.js` is plain Node.
+
+## Vercel deployment
+
+This repository is Vercel-ready: it has no build command, the dashboard is served
+from `/app/index.html`, and the API functions in `/api` provide configuration,
+publishing, persistence acknowledgement, and a deployment health check.
+
+1. Import this repository into the existing Vercel project and deploy the branch.
+2. Set these **Production** environment variables in Vercel (do not commit tokens):
+   `META_TOKEN`, `FB_PAGE_ID`, `FB_PAGE_TOKEN`, `IG_USER_ID`, `LI_ORG_URN`, and
+   `LI_TOKEN`. `META_GRAPH_VERSION` and `LINKEDIN_VERSION` are optional.
+3. Verify `https://your-domain.example/api/health` returns JSON with `ok: true`.
+4. Open the domain root. The dashboard loads its library and images from the same
+   origin, so it does not depend on localhost or a separate server.
+
+Vercel deployments intentionally use browser local storage for schedules and
+backups; Vercel functions cannot reliably write `content/schedule.json`. Use
+Settings → Backup to move schedules between browsers or deployments. Instagram
+publishing additionally requires a public HTTPS image URL; the deployed JPEG
+assets provide that URL automatically.
