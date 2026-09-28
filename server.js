@@ -55,6 +55,17 @@ function imageInventory() {
 async function api(req, res, pathname) {
   const cfg = resolveConfig();
 
+  // Same shape as api/health.js on Vercel.
+  if (pathname === '/api/health') {
+    if (req.method !== 'GET') return json(res, 405, { error: 'GET only' });
+    return json(res, 200, {
+      ok: true,
+      service: 'fenora-content-desk',
+      runtime: 'local',
+      configured: configuredFlags(cfg),
+    });
+  }
+
   if (pathname === '/api/config') {
     if (req.method === 'POST') {
       // Write only the credential sections; the content library stays read-only.
