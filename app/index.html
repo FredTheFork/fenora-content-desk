@@ -20,6 +20,8 @@
     <button data-tab="today" class="on">Today</button>
     <button data-tab="calendar">Calendar</button>
     <button data-tab="library">Library</button>
+    <button data-tab="vault">Trade Vault</button>
+    <button data-tab="strategy">Strategy</button>
     <button data-tab="grow">Grow</button>
   </nav>
   <div class="top-actions">
@@ -66,6 +68,7 @@
   <div class="toolbar">
     <input id="q" type="search" placeholder="Search your posts — hook, caption or ID…" autocomplete="off">
     <div class="selects">
+      <select id="f-series"><option value="">All series</option></select>
       <select id="f-pillar"><option value="">All pillars</option></select>
       <select id="f-format"><option value="">All formats</option></select>
       <select id="f-status">
@@ -79,6 +82,55 @@
     <button class="btn sm" id="lib-newpost">＋ New post</button>
   </div>
   <div class="lib" id="lib"></div>
+</section>
+
+<!-- ════════════════════ TRADE VAULT ════════════════════ -->
+<section class="tab" id="tab-vault">
+  <div class="vault-header">
+    <div>
+      <h1>Trade Vault &amp; Series Hub</h1>
+      <p class="lede">Site-tested humour, foreman banter, video reel storyboards, interactive carousels, and trade reality.</p>
+    </div>
+    <div class="grow"></div>
+    <div class="subtabs" id="vault-subtabs">
+      <button data-vtab="banter" class="on">⚡ Foreman Banter</button>
+      <button data-vtab="carousels">Carousels (10)</button>
+      <button data-vtab="reels">Video Reels (10)</button>
+      <button data-vtab="flw">Famous Last Words (20)</button>
+      <button data-vtab="lies">Relatable Lies (20)</button>
+      <button data-vtab="memes">Memes (20)</button>
+      <button data-vtab="edu">Educational (10)</button>
+      <button data-vtab="product">Product (10)</button>
+      <button data-vtab="authority">LinkedIn (10)</button>
+    </div>
+  </div>
+
+  <div id="vault-content" class="vault-body">
+    <!-- Populated dynamically by app.js -->
+  </div>
+</section>
+
+<!-- ════════════════════ STRATEGY ════════════════════ -->
+<section class="tab" id="tab-strategy">
+  <div class="strat-header">
+    <div>
+      <h1>Fenora Marketing Strategy &amp; Brand Blueprint</h1>
+      <p class="lede">The complete operational marketing architecture: market positioning, customer personas, 3-layer funnel, competitor differentiation, lead generation, and brand rules.</p>
+    </div>
+    <div class="grow"></div>
+    <div class="subtabs" id="strat-subtabs">
+      <button data-stab="positioning" class="on">Positioning &amp; Persona</button>
+      <button data-stab="funnel">3-Layer Funnel</button>
+      <button data-stab="voice">Brand Voice &amp; Rules</button>
+      <button data-stab="diff">Differentiation Matrix</button>
+      <button data-stab="leadgen">Lead Generation</button>
+      <button data-stab="growth">Growth Loops</button>
+    </div>
+  </div>
+
+  <div id="strat-content" class="strat-body">
+    <!-- Populated dynamically by app.js -->
+  </div>
 </section>
 
 <!-- ════════════════════ GROW ════════════════════ -->
@@ -177,8 +229,16 @@
         <div class="fgroup"><label>LinkedIn lead <span class="muted">(optional — overrides the opening line there)</span></label>
           <textarea id="c-lilead" rows="2"></textarea></div>
         <p class="muted small">Editing the post rebuilds all three captions below. Type in a caption to override just that one.</p>
-        <div class="cap-tabs" id="cap-tabs"></div>
+        <div class="row gap cap-mode-bar" style="margin-bottom:8px">
+          <div class="cap-tabs" id="cap-tabs"></div>
+          <div class="grow"></div>
+          <div class="preview-toggles">
+            <button class="btn ghost sm on" id="btn-mode-raw" type="button">Raw Text</button>
+            <button class="btn ghost sm" id="btn-mode-mock" type="button">📱 Feed Preview</button>
+          </div>
+        </div>
         <textarea id="cap" rows="12"></textarea>
+        <div id="cap-mock" class="social-mock-wrap" hidden></div>
         <div class="cap-bar">
           <button class="btn sm" id="cap-copy">Copy caption</button>
           <button class="btn ghost sm" id="cap-reset">Reset to auto</button>
